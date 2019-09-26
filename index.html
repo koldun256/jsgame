@@ -4,7 +4,7 @@
 
     </head>
     <body>
-        <canvas id="canvas"></canvas>
+        <canvas id="canvas" style="border: 2px solid black"></canvas>
         <script src="/socket.io/socket.io.js"></script>
         <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
         <script>
@@ -12,7 +12,13 @@
             var blockHeight = 10;
             var blockWidth = 10;
             let ctx = document.getElementById("canvas").getContext("2d");
+            let state = 0;
             ctx.fillStyle = "black";
+            ctx.font = "20px serif";
+            ctx.fillText("Нажмите на это что бы начать", 10, 50);
+            function clear(){
+                ctx.clearRect(0, 0, document.getElementById("canvas").width, document.getElementById("canvas").height);
+            }
             function drawBlock(x,y){
                 ctx.fillRect(x*blockWidth,y*blockHeight,blockWidth,blockHeight);
             }
@@ -20,7 +26,7 @@
                 socket.emit("moved",{key:event.key});
             });
             function updateImage(players){
-                ctx.clearRect(0, 0, $("#canvas").width(), $("#canvas").height());
+                clear();
                 for(key in players){
                     drawBlock(...players[key].position);
                 }
@@ -28,9 +34,20 @@
             socket.on("setsize",function(msg){
                 $("#canvas").height(msg.height*blockHeight);
                 $("#canvas").width(msg.width*blockWidth);
+                $("#canvas").click(function(){
+                    if(state==0) socket.emit("started");
+                });
+            });
+            socket.on("wait",function(){
+                clear();
+                ctx.fillText("Ждите", 10, 50);
+                state = 1;
+            });
+            socket.on("start",function(){
+                console.log("st");
+                state = 2;
             });
             socket.on("update",function(msg){
-                console.log(msg.players);
                 updateImage(msg.players);
             });
         </script>
