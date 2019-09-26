@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+    </head>
+    <body>
+        <canvas id="canvas"></canvas>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+        <script>
+            var socket = io();
+            var blockHeight = 10;
+            var blockWidth = 10;
+            let ctx = document.getElementById("canvas").getContext("2d");
+            ctx.fillStyle = "black";
+            function drawBlock(x,y){
+                ctx.fillRect(x*blockWidth,y*blockHeight,blockWidth,blockHeight);
+            }
+            $(document).keydown(function(event){
+                socket.emit("moved",{key:event.key});
+            });
+            function updateImage(players){
+                ctx.clearRect(0, 0, $("#canvas").width(), $("#canvas").height());
+                for(key in players){
+                    drawBlock(...players[key].position);
+                }
+            }
+            socket.on("setsize",function(msg){
+                $("#canvas").height(msg.height*blockHeight);
+                $("#canvas").width(msg.width*blockWidth);
+            });
+            socket.on("update",function(msg){
+                console.log(msg.players);
+                updateImage(msg.players);
+            });
+        </script>
+    </body>
+</html>
