@@ -22,7 +22,7 @@ io.on('connection', function(socket){
 			 },100);
 		});
 	});
-	
+	//a
     socket.on('disconnect',function(){
         delete game.getUsers[socket.id];
     });
