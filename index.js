@@ -1,30 +1,32 @@
-var app = require('express')();
+let path = require("path");
+let express = require("express");
+var app = express();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 var game = require("./game");
-
+var randomColor = require("randomcolor");
+let dir = path.join(__dirname,'graphic');
+app.use(express.static(dir));
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
 });
+app.get('/graphic/bg.png',function(req,res){
+	res.sendFile(__dirname+"/graphic/bg.png");
+});
 
 io.on('connection', function(socket){
-	let user = game.addUser(socket.id,(a,b)=>socket.emit(a,b));
+	let user = game.addUser(socket.id,function(a,b){socket.emit(a,b);},randomColor());
 	socket.emit("setsize",{height: game.height,width: game.width});
-    socket.on("moved",function(key){
-		if("game" in user)
-			game.move(socket.id,key.key);
+    socket.on("setTarget",function(target){
+		console.log("movementAdded");
+		user.createMovement(target);
 	});
 	socket.on("started",function(){
-		game.addUserToGame(user,(player1,player2)=>{
-			 setInterval(()=>{
-				player2.send("update",{players: [player1.toSendingData(),player2.toSendingData()]});
-			 	socket.emit("update",{players: [player1.toSendingData(),player2.toSendingData()]});
-			 },100);
-		});
+		game.addUserToGame(user);
 	});
-	//a
     socket.on('disconnect',function(){
-        delete game.getUsers[socket.id];
+        console.log("deleted");
+        delete game.getUsers()[socket.id];
     });
 });
 

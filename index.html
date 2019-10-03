@@ -8,48 +8,217 @@
         <script src="/socket.io/socket.io.js"></script>
         <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
         <script>
+            function calcPosOnScreen(){
+                console.log("calc");
+                if(me.position[0]<(0.5*screenWidth)){
+                    console.log("1");
+                    screenCenter[0] = screenWidth*0.5;
+                    positionOnScreen[0] = me.position[0];
+                }else if(me.position[0] > width - (0.5*screenWidth)){
+                    console.log("2");
+                    screenCenter[0] = width-(screenWidth*0.5);
+                    positionOnScreen[0] = screenWidth+me.position[0]-width;
+                }else {
+                    console.log("3");
+                    screenCenter[0] = me.position[0];
+                    positionOnScreen[0] = 0.5*screenWidth;
+                }
+
+                if(me.position[1]<(0.5*screenHeight)){
+                    screenCenter[1] = screenHeight*0.5;
+                    positionOnScreen[1] = me.position[1];
+                }else if(me.position[1]>height-(0.5*screenHeight)){
+                    screenCenter[1] = height-(screenHeight*0.5);
+                    positionOnScreen[1] = screenHeight+me.position[1]-height;
+                }else {
+                    screenCenter[1] = me.position[1];
+                    positionOnScreen[1] = 0.5*screenHeight;
+                }
+                //console.log(positionOnScreen);
+                console.log("endcalc");
+            }
+            let screenCenter = [0,0];
+            let loopID;
             var socket = io();
-            var blockHeight = 10;
-            var blockWidth = 10;
+            var blockHeight = 30;
+            var blockWidth = 30;
             let ctx = document.getElementById("canvas").getContext("2d");
             let state = 0;
-            ctx.fillStyle = "black";
-            ctx.font = "20px serif";
-            ctx.fillText("Нажмите на это что бы начать", 10, 50);
+            let screenWidth;
+            let screenHeight;
+            let width;
+            let height;
+            let other = {};
+            let me = {};
+            let positionOnScreen = [0,0];
+            let isMouseDown = false;
+            function Movement(user,point){
+                let player = user;
+                
+                function calcDelta(point){
+                    let allXDelta = point[0] - user.position[0];
+                    let allYDelta = point[1] - user.position[1];
+                    let dx = user.speed/((allXDelta/allYDelta)+1);
+                    let dy = user.speed - dx;
+                    return [dx,dy];
+                }
+                function calcDirection(){
+                    console.log(user);
+                    console.log(point);
+                    let a = player.position[0] > point[0]; //true - right, false - left
+                    let b = player.position[1] > point[1]; //true - down , false - up
+                    return [a,b]; 
+                }
+                function isFinished(){
+                    if(direction[0]){
+                        if(direction[1]){
+                            return player.position[0] > point[0] && player.position[1] > point[1];
+                        }else{
+                            return player.position[0] > point[0] && player.position[1] < point[1];
+                        }
+                    }else {
+                        if(direction[1]){
+                            return player.position[0] < point[0] && player.position[1] > point[1];
+                        }else{
+                            return player.position[0] < point[0] && player.position[1] < point[1];
+                        }
+                    }
+                    return false;
+                }
+                let direction = calcDirection();
+                this.target = point;
+                this.d = calcDelta(point);
+                this.speed = user.speed;
+                
+                this.setTarget = function(newTarget){
+                    this.target = newTarget;
+                    this.d = calcDelta(newTarget);
+                }
+                this.move = function(){
+                    player.position[0]+=this.d[0];
+                    player.position[1]+=this.d[1];
+                    if(isFinished()){
+                        delete player.movement;
+                    }
+                };
+            }
+            function debounce(f,ms){
+                let isCooldown = false;
+                return function() {
+                    console.log("p");
+                    if (isCooldown) return;
+                    console.log("q");
+                    f.apply(this, arguments);
+                    isCooldown = true;
+                    setTimeout(() => isCooldown = false, ms);
+                };
+            }
+            function localToGlobalCoords(x,y){
+                return [x+screenCenter[0]-screenWidth/2,y+screenCenter[1]-screenHeight/2];
+            }
+            let addTarget = function(x,y){
+                socket.emit("setTarget",{x:x,y:y});
+            };
+            addTarget = debounce(addTarget,100);
+            window.addEventListener("load",function(){
+                    
+                let bg = new Image();
+                bg.src = "graphic\\bg.png";
+                bg.addEventListener("load",function(){
+                    ctx.font = "20px serif";
+                    ctx.fillText("Нажмите на это что бы начать", 10, 50);
+                    socket.on("get target",function(msg){
+                        if(msg.id == other.id){
+                            console.log("moving other");
+                            other.movement = new Movement(other,msg.movement.target);
+                        }else {
+                            console.log("moving me");
+                            me.movement = new Movement(me,msg.movement.target);
+                        }
+                    });
+                    $("#canvas").mousedown(function(a){
+                        isMouseDown = true;
+                        if(state!=2) return;
+                        addTarget(...localToGlobalCoords(a.clientX,a.clientY));
+                    });
+                    $("#canvas").mouseup(function(){
+                        isMouseDown = false;
+                    });
+                    $("#canvas").mousemove(function(a){
+                        if(state!=2) return;
+                        if(isMouseDown) addTarget(...localToGlobalCoords(a.clientX,a.clientY));
+                    });
+                    socket.on("wait",function(){
+                        clear();
+                        ctx.fillText("Ждите", 10, 50);
+                        state = 1;
+                    });
+                    socket.on("start",function(msg){
+                        other = msg.other;
+                        me = msg.me;
+                        height = msg.height;
+                        width = msg.width;
+                        calcPosOnScreen();
+                        loopID = setInterval(function(){
+                            if("movement" in me){
+                                me.movement.move();
+                                calcPosOnScreen();
+                            }
+                            if("movement" in other){
+                                other.movement.move();
+                            }
+                            updateImage(bg);
+                        },100);
+                        state = 2;
+                    });
+                    socket.on("removeMovement",id=>{
+                        if(id==me.id){
+                            if("movement" in me){
+                                delete me.movement;
+                            }
+                        }else if(id==other.id){
+                            if("movement" in other){
+                                delete other.movement;
+                            }
+                        }
+                    });
+                    socket.on("setsize",function(msg){
+                        $("#canvas").attr("height",msg.height+"px");
+                        $("#canvas").attr("width",msg.width+"px");
+                        ctx = document.getElementById("canvas").getContext("2d");
+                        screenWidth = msg.width;
+                        screenHeight = msg.height;
+                        $("#canvas").click(function(){
+                            if(state==0) socket.emit("started");
+                        });
+                    });
+                },false);
+            },false);
+            
             function clear(){
                 ctx.clearRect(0, 0, document.getElementById("canvas").width, document.getElementById("canvas").height);
             }
-            function drawBlock(x,y){
-                ctx.fillRect(x*blockWidth,y*blockHeight,blockWidth,blockHeight);
+            function drawBlock(x,y,color){
+                ctx.fillStyle = color;
+                ctx.fillRect(x,y,blockWidth,blockHeight);
             }
-            $(document).keydown(function(event){
-                socket.emit("moved",{key:event.key});
-            });
-            function updateImage(players){
-                clear();
-                for(key in players){
-                    drawBlock(...players[key].position);
+            function drawPlayer(player){
+                if(player == undefined){
+                    //console.log(positionOnScreen);
+                    drawBlock((positionOnScreen[0])-(blockWidth/2),(positionOnScreen[1])-(blockHeight/2),me.color);
+                }else{
+                    if(!("position" in player)) return;
+                    drawBlock(player.position[0] - screenCenter[0] + (blockWidth/2),
+                        player.position[1] - screenCenter[1] + (blockHeight/2),
+                        player.color);
                 }
             }
-            socket.on("setsize",function(msg){
-                $("#canvas").height(msg.height*blockHeight);
-                $("#canvas").width(msg.width*blockWidth);
-                $("#canvas").click(function(){
-                    if(state==0) socket.emit("started");
-                });
-            });
-            socket.on("wait",function(){
+            function updateImage(bg){
                 clear();
-                ctx.fillText("Ждите", 10, 50);
-                state = 1;
-            });
-            socket.on("start",function(){
-                console.log("st");
-                state = 2;
-            });
-            socket.on("update",function(msg){
-                updateImage(msg.players);
-            });
+                ctx.drawImage(bg,screenCenter[0]-(screenWidth/2),screenCenter[1]-(screenHeight/2),screenWidth,screenHeight,0,0,screenWidth,screenHeight);
+                drawPlayer();
+                drawPlayer(other);
+            }
         </script>
     </body>
 </html>
