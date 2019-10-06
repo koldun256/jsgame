@@ -1,4 +1,4 @@
-let playerSpeed = 2;
+let playerSpeed = 5;
 let height = 6000;
 let width = 6000;
 let users = {};
@@ -132,11 +132,25 @@ function Movement(user,point){
     let player = user;
     
     function calcDelta(point){
-        let allXDelta = point[0] - user.position[0];
-        let allYDelta = point[1] - user.position[1];
-        let dx = user.speed/((allXDelta/allYDelta)+1);
-        let dy = user.speed - dx;
-        return [dx,dy];
+        if(point[0] == user.position[0]){
+            return [0,user.speed];
+        }else if(point[1] == user.position[1]){
+            return [user.speed,0];
+        }else{    
+            let allXDelta = point[0] - user.position[0];
+            let allYDelta = point[1] - user.position[1];
+            let dx;
+            let dy;
+            let a = allXDelta/allYDelta;
+            if(a < 0){
+                dx = Math.abs(user.speed*a/(a-1)) * (Math.abs(allXDelta)/allXDelta);
+                dy = Math.abs(user.speed/(a-1)) * (Math.abs(allYDelta)/allYDelta);
+            }else {
+                dx = Math.abs(user.speed*a/(a+1)) * (Math.abs(allXDelta)/allXDelta);
+                dy = Math.abs(user.speed/(a+1)) * (Math.abs(allYDelta)/allYDelta);
+            }
+            return [dx,dy];
+        }
     }
     function calcDirection(){
         let a = player.position[0] > point[0]; //true - right, false - left
