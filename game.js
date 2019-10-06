@@ -1,3 +1,4 @@
+let playerSpeed = 2;
 let height = 6000;
 let width = 6000;
 let users = {};
@@ -185,7 +186,7 @@ function User(send,id,color){
     //console.log(this.position);
     this.game = null;
     this.send = send;
-    this.speed = 2;
+    this.speed = playerSpeed;
     this.screenCollider = new Collider(this.position, [playerScreenX,playerScreenY]);
     this.collider = new Collider(this.position, [10,10]);
     this.toSendingData = function(){
@@ -196,7 +197,8 @@ function User(send,id,color){
     this.createMovement = function(point){
         console.log("movement creation");
         this.movement = new Movement(this,point);
-        //console.log(this);
+        console.log(this.movement.toSendingData());
+        console.log(this);  
         this.send("get target",{
             movement: this.movement.toSendingData(),
             id: this.id});
@@ -234,5 +236,6 @@ module.exports = {
         return users;
     },
     height: playerScreenX,
-    width: playerScreenY
+    width: playerScreenY,
+    speed: playerSpeed
 };

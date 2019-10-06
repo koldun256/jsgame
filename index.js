@@ -16,7 +16,7 @@ app.get('/graphic/bg.png',function(req,res){
 
 io.on('connection', function(socket){
 	let user = game.addUser(socket.id,function(a,b){socket.emit(a,b);},randomColor());
-	socket.emit("setsize",{height: game.height,width: game.width});
+	socket.emit("setsize",{height: game.height,width: game.width,speed: game.speed});
     socket.on("setTarget",function(target){
 		console.log("movementAdded");
 		user.createMovement(target);
