@@ -102,23 +102,29 @@
                     // return [dx,dy];
                 }
                 function calcDirection(){
-                    console.log(user);
-                    console.log(point);
-                    let a = player.position[0] > point[0]; //true - right, false - left
-                    let b = player.position[1] > point[1]; //true - down , false - up
+                    let a = !(player.position[0] > point.x); //true - right, false - left
+                    let b = !(player.position[1] > point.y); //true - down , false - up
+                    // console.log("player position: x: "+player.position[0]+" y: "+player.position[1]);
+                    // console.log("point: x: "+point.x+" y: "+point.y);
+                    // console.log("direction: a: "+a+" b: "+b);
+                    // console.log(player.position[1]>point[1]);
                     return [a,b]; 
                 }
                 function isFinished(){
-                    if(direction[0]){   
+                    if(direction[0]){
                         if(direction[1]){
+                            console.log("\\_");
                             return player.position[0] > point.x && player.position[1] > point.y;
                         }else{
+                            console.log("/`");
                             return player.position[0] > point.x && player.position[1] < point.y;
                         }
                     }else {
                         if(direction[1]){
+                            console.log("_/");
                             return player.position[0] < point.x && player.position[1] > point.y;
                         }else{
+                            console.log("`\\");
                             return player.position[0] < point.x && player.position[1] < point.y;
                         }
                     }
