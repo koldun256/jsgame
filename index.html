@@ -159,6 +159,18 @@
                 socket.emit("setTarget",{x:x,y:y});
             };
             addTarget = debounce(addTarget,100);
+            
+            socket.on("setsize",function(msg){
+                        speed = msg.speed;
+                        $("#canvas").attr("height",msg.height+"px");
+                        $("#canvas").attr("width",msg.width+"px");
+                        ctx = document.getElementById("canvas").getContext("2d");
+                        screenWidth = msg.width;
+                        screenHeight = msg.height;
+                        $("#canvas").click(function(){
+                            if(state==0) socket.emit("started");
+                        });
+                    });
             window.addEventListener("load",function(){
                     
                 let bg = new Image();
@@ -222,17 +234,6 @@
                                 delete other.movement;
                             }
                         }
-                    });
-                    socket.on("setsize",function(msg){
-                        speed = msg.speed;
-                        $("#canvas").attr("height",msg.height+"px");
-                        $("#canvas").attr("width",msg.width+"px");
-                        ctx = document.getElementById("canvas").getContext("2d");
-                        screenWidth = msg.width;
-                        screenHeight = msg.height;
-                        $("#canvas").click(function(){
-                            if(state==0) socket.emit("started");
-                        });
                     });
                 },false);
             },false);
