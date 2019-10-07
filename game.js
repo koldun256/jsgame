@@ -84,7 +84,7 @@ function Game(player){
     GAMES[id] = this;
     this.player1 = player;
     this.start = function(){
-        this.updateDataLoopID = setInterval();
+        //this.updateDataLoopID = setInterval();
         let player2Msg = {
             other:{
                 color: this.player1.color,
