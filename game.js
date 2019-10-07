@@ -10,9 +10,8 @@ function Collider(center,size){
     this.sizeX = size[0]/2;
     this.sizeY = size[1]/2;
     this.position = center;
+    console.log(this.position);
     this.isTouching = function(other){
-        //console.log(other);
-        //console.log(this);
         let a=false,b=false,c=false,d = false;
         if(other.position[0] > this.position[0]){
             b = (other.position[0]-other.sizeX) < (this.position[0]+this.sizeX);
@@ -24,14 +23,19 @@ function Collider(center,size){
         }else {
             c = (other.position[1]+other.sizeY) > (this.position[1]-this.sizeY);
         }
-        //console.log("a: "+a);
-        //console.log("b: "+b);
-        //console.log("c: "+c);
-        //console.log("d: "+d);
-        return (a||b)&&(c||d);
+        //console.log(other.position);
+        //console.log("other: x: "+other.position[0]+" y: "+other.position[1]+" xSize: "+other.sizeX+" ySize: "+other.sizeY);
+        //console.log("a: "+a+" b: "+b+" c: "+c+" d: "+d);
+        let result = (a||b)&&(c||d);
+        if(result){
+
+            //console.log("qwertyuiiopasdfghjklzxcvbnm");
+        }
+        return result;
     };
 }
 function Game(player){
+    
     let loop = function(){
         if("movement" in this.player1){ 
             this.player1.movement.move();
@@ -43,31 +47,36 @@ function Game(player){
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
         if(this.player2.screenCollider.isTouching(this.player1.collider)){
-            console.log("aaa");
+            console.log("player2 seeing player1");
             if(!this.player2.seeing.has("other player")){
-                this.player2.send(this.player1.movement.toSendingData());
+                if("movement" in this.player1) {
+                    this.player2.send("get target",{movement: this.player1.movement.toSendingData(), id: this.player1.id});
+                    console.log("sending player1 to player2");
+                }
                 this.player2.seeing.add("other player");
             }
         }else{
             if(this.player2.seeing.has("other player")){
-                this.player2.seeing.delete("other player")
+                this.player2.seeing.delete("other player");
             }
         }
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
         if(this.player1.screenCollider.isTouching(this.player2.collider)){
+            console.log("player1 seeing player2");
             if(!this.player1.seeing.has("other player")){
-                this.player1.send(this.player1.movement.toSendingData());
+                if("movement" in this.player2) {
+                    this.player1.send("get target",{movement: this.player2.movement.toSendingData(), id: this.player2.id});
+                    console.log("sending player2 to player1");
+                }
                 this.player1.seeing.add("other player");
             }
         }else{
             if(this.player1.seeing.has("other player")){
-                this.player1.seeing.delete("other player")
+                this.player1.seeing.delete("other player");
             }
         }
-        //this.player1.send("update",{myposition: this.player1.position, otherposition: this.player2.position});
-        //this.player2.send("update",{myposition: this.player2.position, otherposition: this.player1.position});
     };
     let loopTimer;
     let id = Symbol();
@@ -75,6 +84,7 @@ function Game(player){
     GAMES[id] = this;
     this.player1 = player;
     this.start = function(){
+        this.updateDataLoopID = setInterval();
         let player2Msg = {
             other:{
                 color: this.player1.color,
@@ -132,16 +142,17 @@ function Movement(user,point){
     let player = user;
     
     function calcDelta(point){
-        if(point[0] == user.position[0]){
+        if(point.y == user.position[0]){
             return [0,user.speed];
-        }else if(point[1] == user.position[1]){
+        }else if(point.y == user.position[1]){
             return [user.speed,0];
         }else{    
-            let allXDelta = point[0] - user.position[0];
-            let allYDelta = point[1] - user.position[1];
+            let allXDelta = point.x - user.position[0];
+            let allYDelta = point.y - user.position[1];
             let dx;
             let dy;
             let a = allXDelta/allYDelta;
+            // console.log("boo "+point[0]);
             if(a < 0){
                 dx = Math.abs(user.speed*a/(a-1)) * (Math.abs(allXDelta)/allXDelta);
                 dy = Math.abs(user.speed/(a-1)) * (Math.abs(allYDelta)/allYDelta);
@@ -149,6 +160,7 @@ function Movement(user,point){
                 dx = Math.abs(user.speed*a/(a+1)) * (Math.abs(allXDelta)/allXDelta);
                 dy = Math.abs(user.speed/(a+1)) * (Math.abs(allYDelta)/allYDelta);
             }
+            // console.log("dx: "+dx+" dy: "+dy);
             return [dx,dy];
         }
     }
@@ -182,11 +194,15 @@ function Movement(user,point){
         this.d = calcDelta(newTarget);
     }
     this.toSendingData = function(){
-        return {player: player.id, target: point}
+        return {id: player.id, target: point, currentPosition: player.position};
     }
     this.move = function(){
+        // console.log(this.d);
         player.position[0]+=this.d[0];
         player.position[1]+=this.d[1];
+        // console.log("193 "+player.position);
+        player.screenCollider.position = player.collider.position = player.position;
+        
         if(isFinished()){
             delete player.movement;
         }
@@ -196,7 +212,8 @@ function User(send,id,color){
     this.id = id;
     this.color = color;
     this.seeing = new Set();
-    this.position = [Math.floor(Math.random()*width),Math.floor(Math.random()*height)];
+    //this.position = [Math.floor(Math.random()*width),Math.floor(Math.random()*height)];
+    this.position = [1500+Math.floor(Math.random()*1000),1500];
     //console.log(this.position);
     this.game = null;
     this.send = send;
@@ -209,20 +226,13 @@ function User(send,id,color){
             color:      this.color };
     };
     this.createMovement = function(point){
-        console.log("movement creation");
         this.movement = new Movement(this,point);
-        console.log(this.movement.toSendingData());
-        console.log(this);  
         this.send("get target",{
             movement: this.movement.toSendingData(),
             id: this.id});
-        
-        if(this.other.seeing.has("other player")){
-            console.log("sending movement to other");
-            this.other.send("get movement",{
-                movement: this.movement.toSendingData(),
-                id:this.id });
-        }else{
+        if(this.other.screenCollider.isTouching(this.collider)){
+            this.other.seeing.delete("other player");
+        }else {
             this.other.send("removeMovement",id);
         }
     };

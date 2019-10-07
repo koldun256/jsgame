@@ -1,3 +1,4 @@
+console.log(Math.abs(-2));
 let path = require("path");
 let express = require("express");
 var app = express();
@@ -18,7 +19,7 @@ io.on('connection', function(socket){
 	let user = game.addUser(socket.id,function(a,b){socket.emit(a,b);},randomColor());
 	socket.emit("setsize",{height: game.height,width: game.width,speed: game.speed});
     socket.on("setTarget",function(target){
-		console.log("movementAdded");
+		//console.log("movementAdded");
 		user.createMovement(target);
 	});
 	socket.on("started",function(){

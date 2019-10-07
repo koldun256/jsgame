@@ -41,9 +41,9 @@
                 let x = globalPosition.x-screenCenter[0] + (screenWidth/2);
                 let y = globalPosition.y-screenCenter[1] + (screenHeight/2);
                 ctx.beginPath();
-                console.log("global position: x "+globalPosition.x+" y "+globalPosition.y);
-                console.log("screen center: x "+screenCenter[0]+" y "+screenCenter[1]);
-                console.log("result: x "+x+" y "+y);
+                //console.log("global position: x "+globalPosition.x+" y "+globalPosition.y);
+                //console.log("screen center: x "+screenCenter[0]+" y "+screenCenter[1]);
+                //console.log("result: x "+x+" y "+y);
                 ctx.arc(x, y, 15, 0, 2 * Math.PI, false);
                 ctx.lineWidth = 7;
                 ctx.strokeStyle = "red";
@@ -113,18 +113,18 @@
                 function isFinished(){
                     if(direction[0]){
                         if(direction[1]){
-                            console.log("\\_");
+                            //console.log("\\_");
                             return player.position[0] > point.x && player.position[1] > point.y;
                         }else{
-                            console.log("/`");
+                            //console.log("/`");
                             return player.position[0] > point.x && player.position[1] < point.y;
                         }
                     }else {
                         if(direction[1]){
-                            console.log("_/");
+                            //console.log("_/");
                             return player.position[0] < point.x && player.position[1] > point.y;
                         }else{
-                            console.log("`\\");
+                            //console.log("`\\");
                             return player.position[0] < point.x && player.position[1] < point.y;
                         }
                     }
@@ -150,9 +150,9 @@
             function debounce(f,ms){
                 let isCooldown = false;
                 return function() {
-                    console.log("p");
+                    //console.log("p");
                     if (isCooldown) return;
-                    console.log("q");
+                    //console.log("q");
                     f.apply(this, arguments);
                     isCooldown = true;
                     setTimeout(() => isCooldown = false, ms);
@@ -185,8 +185,10 @@
                     ctx.font = "20px serif";
                     ctx.fillText("Нажмите на это что бы начать", 10, 50);
                     socket.on("get target",function(msg){
+                        console.log("movement");
                         if(msg.id == other.id){
                             console.log("moving other");
+                            other.position = msg.movement.currentPosition;
                             other.movement = new Movement(other,msg.movement.target);
                         }else {
                             console.log("moving me");
@@ -224,6 +226,7 @@
                                 calcPosOnScreen();
                             }
                             if("movement" in other){
+                                console.log("moving other");
                                 other.movement.move();
                             }
                             updateImage(bg);
@@ -257,8 +260,9 @@
                     drawBlock((positionOnScreen[0])-(blockWidth/2),(positionOnScreen[1])-(blockHeight/2),me.color);
                 }else{
                     if(!("position" in player)) return;
-                    drawBlock(player.position[0] - screenCenter[0] + (blockWidth/2),
-                        player.position[1] - screenCenter[1] + (blockHeight/2),
+
+                    drawBlock(player.position[0] - screenCenter[0] + (screenWidth)/2 - blockWidth/2,
+                        player.position[1] - screenCenter[1] + (screenHeight/2) - blockHeight/2,
                         player.color);
                 }
             }
