@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-
+        <link rel="icon" href="/i.ico" />
     </head>
     <body>
         <canvas id="canvas" style="border: 2px solid black"></canvas>
@@ -243,6 +243,9 @@
                                 delete other.movement;
                             }
                         }
+                    });
+                    socket.on("set player position",function(msg){
+                        other.position = msg;
                     });
                 },false);
             },false);

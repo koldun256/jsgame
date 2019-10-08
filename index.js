@@ -1,6 +1,7 @@
 console.log(Math.abs(-2));
 let path = require("path");
 let express = require("express");
+let favicon = require("serve-favicon");
 var app = express();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
@@ -8,6 +9,7 @@ var game = require("./game");
 var randomColor = require("randomcolor");
 let dir = path.join(__dirname,'graphic');
 app.use(express.static(dir));
+app.use(favicon(__dirname+"/i.ico"));
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
 });
