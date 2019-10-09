@@ -8,18 +8,15 @@
         <script src="/socket.io/socket.io.js"></script>
         <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
         <script>
+            const mapSize = [80,80];
             function calcPosOnScreen(){
-                // console.log("calc");
                 if(me.position[0]<(0.5*screenWidth)){
-                    // console.log("1");
                     screenCenter[0] = screenWidth*0.5;
                     positionOnScreen[0] = me.position[0];
                 }else if(me.position[0] > width - (0.5*screenWidth)){
-                    // console.log("2");
                     screenCenter[0] = width-(screenWidth*0.5);
                     positionOnScreen[0] = screenWidth+me.position[0]-width;
                 }else {
-                    // console.log("3");
                     screenCenter[0] = me.position[0];
                     positionOnScreen[0] = 0.5*screenWidth;
                 }
@@ -34,16 +31,21 @@
                     screenCenter[1] = me.position[1];
                     positionOnScreen[1] = 0.5*screenHeight;
                 }
-                //console.log(positionOnScreen);
-                // console.log("endcalc");
+            }
+            function drawMap(){
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = "black";
+                ctx.clearRect(screenWidth-(mapSize[0]+10),10,mapSize[0],mapSize[1]);
+                ctx.strokeRect(screenWidth-(mapSize[0]+10),10,mapSize[0],mapSize[1]);
+                ctx.fillStyle = me.color;
+                ctx.fillRect(   screenWidth-(mapSize[0]+10)+(me.position[0]/width*mapSize[0]),
+                                10+(me.position[1]/height*mapSize[1]),
+                                4,4);
             }
             function drawTarget(globalPosition){
                 let x = globalPosition.x-screenCenter[0] + (screenWidth/2);
                 let y = globalPosition.y-screenCenter[1] + (screenHeight/2);
                 ctx.beginPath();
-                //console.log("global position: x "+globalPosition.x+" y "+globalPosition.y);
-                //console.log("screen center: x "+screenCenter[0]+" y "+screenCenter[1]);
-                //console.log("result: x "+x+" y "+y);
                 ctx.arc(x, y, 15, 0, 2 * Math.PI, false);
                 ctx.lineWidth = 7;
                 ctx.strokeStyle = "red";
@@ -275,6 +277,7 @@
                 if("movement" in me) drawTarget(me.movement.target);
                 drawPlayer();
                 drawPlayer(other);
+                drawMap();
             }
         </script>
     </body>
