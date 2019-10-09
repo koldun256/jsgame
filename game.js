@@ -1,3 +1,4 @@
+let updateDataDelay = 5000;
 let playerSpeed = 5;
 let height = 6000;
 let width = 6000;
@@ -28,6 +29,7 @@ function Collider(center,size){
 }
 function Game(player){
     this.loops = 0;
+    let updateLoopID;
     let loop = function(){
         this.loops++;
         if("movement" in this.player1){ 
@@ -81,6 +83,26 @@ function Game(player){
             }
         }
     };
+    function updateLoop(){
+        let player1Message = {me: {position: this.player1.position}};
+        let player2Message = {me: {position: this.player2.position}};
+        if(this.player2.seeing.has("other player")){
+            player2Message.other = {position: this.player1.position};
+        }
+        if(this.player1.seeing.has("other player")){
+            player1Message.other = {position: this.player2.position};
+        }
+        if("movement" in this.player1){
+            player1Message.me.movement = this.player1.movement.toSendingData();
+            if("other" in player2Message) player2Message.other.movement = this.player1.movement.toSendingData();
+        }
+        if("movement" in this.player2){
+            player2Message.me.movement = this.player2.movement.toSendingData();
+            if("other" in player1Message) player1Message.other.movement = this.player2.movement.toSendingData();
+        }
+        this.player1.send("update data",player1Message);
+        this.player2.send("update data",player2Message);
+    }
     let loopTimer;
     let id = Symbol();
     this.colliders = [];
@@ -119,6 +141,9 @@ function Game(player){
         this.player2.send("start",player2Msg);
         this.player2.game = this;
         let b = this;
+        updateLoopID = setInterval(function(){
+            updateLoop.apply(b,[]);
+        },updateDataDelay);
         loopTimer = setInterval(function(){
             loop.apply(b,[]);
         },100);
@@ -131,6 +156,7 @@ function Game(player){
             this.player1.send("loose");
         }
         clearInterval(loopTimer);
+        clearInterval(updateLoopID);
         delete GAMES[id];
     };
     this.addPlayer = function(player){

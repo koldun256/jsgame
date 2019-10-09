@@ -167,7 +167,24 @@
                 socket.emit("setTarget",{x:x,y:y});
             };
             addTarget = debounce(addTarget,100);
-            
+            socket.on("update data",function(msg){
+                console.log("updating data: ");
+                console.log(msg);
+                me.position = msg.me.position;
+                if("movement" in msg.me){
+                    me.movement = new Movement(me,msg.me.movement.target);
+                }else{
+                    delete me.movement;
+                }
+                if("other" in msg){
+                    other.position = msg.other.position;
+                    if("movement" in msg.other){
+                        other.movement = new Movement(me,msg.other.movement.target);
+                    }else{
+                        delete other.movement;
+                    }
+                }
+            });
             socket.on("setsize",function(msg){
                         speed = msg.speed;
                         $("#canvas").attr("height",msg.height+"px");
