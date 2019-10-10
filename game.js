@@ -1,12 +1,29 @@
-let updateDataDelay = 5000;
+const frameDelay = 100;
+let playersInTeam = 1;
+let teamsInGame = 2;
+let startMana = 1000;
+let manaRegen = 10;
+let baseSize = 100;
+let manaZoneWidth = 20;
+let manaZoneDistance = 100;
+let updateDataDelay = 1000;
 let playerSpeed = 5;
 let height = 6000;
 let width = 6000;
+let basesPositions = [[width/4,height/2],[width*0.75,height/2]];
 let users = {};
-let waitingGame = null;
 let GAMES = {};
+let waitingGame = new Game();
 let playerScreenX = 900;
 let playerScreenY = 900;
+
+function isPlayerInManaZone(playerPos,basePos){
+    function calcDistance(pointA,pointB){
+        return Math.abs(Math.sqrt((pointA[0]-pointB[0])**2 + (pointA[1]-pointB[1])**2));
+    }
+    let distance = calcDistance(playerPos,basePos);
+    return (distance > manaZoneDistance) && (distance < (manaZoneDistance + manaZoneWidth));
+}
 function Collider(center,size){
     this.sizeX = size[0]/2;
     this.sizeY = size[1]/2;
@@ -27,143 +44,112 @@ function Collider(center,size){
         return result;
     };
 }
-function Game(player){
+function Game(){
+    this.players = [];
+    let playersCount = 0;
+    const maxPlayers = teamsInGame * playersInTeam;
+    this.teams = [];
     this.loops = 0;
     let updateLoopID;
     let loop = function(){
         this.loops++;
-        if("movement" in this.player1){ 
-            this.player1.movement.move();
-        }
-        if("movement" in this.player2){ 
-            this.player2.movement.move();
-        }
-        // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-        // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-        // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-        if(this.player2.screenCollider.isTouching(this.player1.collider)){
-            console.log(this.loops+"| player2 seeing player1");
-            if(!this.player2.seeing.has("other player")){
-                console.log(this.loops+"| sending player1 to player2");
-                if("movement" in this.player1) {
-                    this.player2.send("get target",{movement: this.player1.movement.toSendingData(), id: this.player1.id});
-                    console.log(this.loops+"| movement sent");
-                }else {
-                    this.player2.send("set player position",this.player1.position);
-                    console.log(this.loops+"| movement not found, sending only position");
-                }
-                this.player2.seeing.add("other player");
+        this.players.forEach(function(player){
+            if("movement" in player){
+                player.movement.move();
+                player.isOnBase = player.collider.isTouching(player.team.baseCollider);
+                if(player.isInManaZone = isPlayerInManaZone(player.position,player.team.basePosition)) player.mana += manaRegen;
             }
-        }else{
-            console.log(this.loops+"| player2 not seeing player1");
-            if(this.player2.seeing.has("other player")){
-                this.player2.seeing.delete("other player");
-            }
-        }
-        // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-        // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-        // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-        if(this.player1.screenCollider.isTouching(this.player2.collider)){
-            console.log(this.loops+"| player1 seeing player2");
-            if(!(this.player1.seeing.has("other player"))){
-                console.log(this.loops+"| sending player2 to player1");
-                if("movement" in this.player2) {
-                    this.player1.send("get target",{movement: this.player2.movement.toSendingData(), id: this.player2.id});
-                    console.log(this.loops+"| movement sent");
+            player.others.forEach(function(other){
+                if(player.screenCollider.isTouching(other.collider)){
+                    if(!player.seeing.has(other.id)){
+                        player.seeing.add(other.id);
+                        if("movement" in other){
+                            player.send("get target",other.movement.toSendingData());
+                        }else {
+                            player.send("set position",{id: other.id, position: other.position});
+                        }
+                    }
                 }else{
-                    this.player1.send("set player position",this.player2.position);
-                    console.log(this.loops+"| movement not found, sending position");
+                    player.seeing.delete(other.id);
                 }
-                this.player1.seeing.add("other player");
-            }
-        }else{
-            console.log(this.loops+"| player1 not seeing player2");
-            if(this.player1.seeing.has("other player")){
-                this.player1.seeing.delete("other player");
-            }
-        }
+            });
+        });
     };
     function updateLoop(){
-        let player1Message = {me: {position: this.player1.position}};
-        let player2Message = {me: {position: this.player2.position}};
-        if(this.player2.seeing.has("other player")){
-            player2Message.other = {position: this.player1.position};
-        }
-        if(this.player1.seeing.has("other player")){
-            player1Message.other = {position: this.player2.position};
-        }
-        if("movement" in this.player1){
-            player1Message.me.movement = this.player1.movement.toSendingData();
-            if("other" in player2Message) player2Message.other.movement = this.player1.movement.toSendingData();
-        }
-        if("movement" in this.player2){
-            player2Message.me.movement = this.player2.movement.toSendingData();
-            if("other" in player1Message) player1Message.other.movement = this.player2.movement.toSendingData();
-        }
-        this.player1.send("update data",player1Message);
-        this.player2.send("update data",player2Message);
+        this.send("update data",function(player){
+            let message = {me: {position: player.position}};
+            if("movement" in player){
+                message.me.movement = player.movement.toSendingData();
+            }
+            player.others.forEach(function(otherPlayer){
+                if(player.seeing.has(otherPlayer.id)){
+                    message[otherPlayer.id] = {position: otherPlayer.position};
+                    if("movement" in otherPlayer){
+                        message[otherPlayer.id].movement = otherPlayer.movement;
+                    }
+                }
+            });
+            return message;
+        });
     }
     let loopTimer;
     let id = Symbol();
     this.colliders = [];
     GAMES[id] = this;
-    this.player1 = player;
+    this.send = function(msg,func){
+        this.teams.forEach(function(team){
+            team.send(msg,func);
+        });
+    }
     this.start = function(){
-        let player2Msg = {
-            other:{
-                color: this.player1.color,
-                id: this.player1.id},
-            me:{
-                color: this.player2.color,
-                id: this.player2.id,
-                position: this.player2.position},
-            height: height,
-            width: width};
-        let player1Msg = {
-            me:{
-                color: this.player1.color,
-                id: this.player1.id,
-                position: this.player1.position},
-            other:{
-                color: this.player2.color,
-                id: this.player2.id },
-            height: height,
-            width: width};
-        if(this.player2.collider.isTouching(this.player1.screenCollider)){
-            this.player1.seeing.add("other player");
-            player1Msg.other.position = this.player2.position;
-        }
-        if(this.player1.collider.isTouching(this.player2.screenCollider)){
-            this.player2.seeing.add("other player");
-            player2Msg.other.position = this.player1.position;
-        }
-        this.player1.send("start",player1Msg);
-        this.player2.send("start",player2Msg);
-        this.player2.game = this;
-        let b = this;
+        this.players.forEach(player=>player.position = player.team.basePosition);
+        this.send("start",function(player){
+            let message = {me:{position: player.position, color: player.color, id: player.id},others:{}};
+            player.others.forEach(function(other){
+                message.others[other.id] = {color: other.color};
+                if(player.screenCollider.isTouching(other.collider)){
+                    message.others[other.id].position = other.position;
+                }
+            });
+            return message;
+        });
+        let game = this;
+        this.players.forEach(player => player.game=game);
         updateLoopID = setInterval(function(){
-            updateLoop.apply(b,[]);
+            updateLoop.apply(game,[]);
         },updateDataDelay);
         loopTimer = setInterval(function(){
-            loop.apply(b,[]);
-        },100);
+            loop.apply(game,[]);
+        },frameDelay);
     };
     this.end = function(winner){
         winner.send("win");
-        if(this.player1 == winner){
-            this.player2.send("loose");
-        }else {
-            this.player1.send("loose");
-        }
+        winner.others.forEach(other=>other.send("loose",()=>{return 0}));
         clearInterval(loopTimer);
         clearInterval(updateLoopID);
         delete GAMES[id];
     };
     this.addPlayer = function(player){
-        this.player2 = player;
-        this.player1.other = this.player2;
-        this.player2.other = this.player1;
-        this.start();
+        playersCount++;
+        player.others = [...this.players];
+        this.players.forEach(function(curPlayer){
+            curPlayer.others.push(player);
+        });
+        this.players.push(player);
+        if(playersCount%playersInTeam==0){
+            let newTeam = new Team(basesPositions[this.teams.length]);
+            newTeam.others = [...this.teams];
+            this.teams.forEach(function(oldTeam){
+                oldTeam.others.push(newTeam);
+            });
+            this.teams.push(newTeam);
+        }
+        this.teams[this.teams.length - 1].addPlayer(player);
+        if(playersCount==maxPlayers){
+            this.start();
+            return true;
+        }
+        return false;
     }
 }
 function Movement(user,point){
@@ -193,7 +179,7 @@ function Movement(user,point){
     function calcDirection(){
         let a = player.position[0] < point.x; //true - right, false - left
         let b = player.position[1] < point.y; //true - down , false - up
-        console.log("direction: "+a+" "+b);
+        // console.log("direction: "+a+" "+b);
         return [a,b]; 
     }
     function isFinished(){
@@ -211,7 +197,7 @@ function Movement(user,point){
                 result = player.position[0] < point.x && player.position[1] < point.y;
             }
         }
-        console.log("is finished: "+result+", move count: "+moveCount);
+        // console.log("is finished: "+result+", move count: "+moveCount);
         return result;
     }
     let direction = calcDirection();
@@ -238,11 +224,33 @@ function Movement(user,point){
         }
     };
 }
-function User(send,id,color){
+function Team(basePosition){
+    this.baseCollider = new Collider(basePosition, baseSize);
+    this.basePosition = basePosition;
+    this.players = [];
+    this.others = [];
+    this.addPlayer = function(newPlayer){
+        newPlayer.team = this;
+        newPlayer.teamMates = this.players;
+        this.players.forEach(function(player){
+            player.teamMates.push(newPlayer);
+        });
+        this.players.push(newPlayer);
+    }
+    this.send = function(msgText,func){
+        this.players.forEach(player=>player.send(msgText,func(player)));
+    }
+}
+function User(send,id,color,position){
+    this.isOnBase = true;
+    this.isInManaZone = false;
+    this.others = [];
     this.id = id;
+    this.mana = startMana;
+    this.teamMates = [];
     this.color = color;
     this.seeing = new Set();
-    this.position = [1500+Math.floor(Math.random()*1000),1500];
+    this.position = position;
     this.game = null;
     this.send = send;
     this.speed = playerSpeed;
@@ -256,26 +264,26 @@ function User(send,id,color){
     this.createMovement = function(point){
         console.log("new movement||||||||||||||||||||||||||||||||||||||||||||||||||||||");
         this.movement = new Movement(this,point);
-        this.send("get target",{
-            movement: this.movement.toSendingData(),
-            id: this.id});
-        this.other.seeing.delete("other player");
-        this.other.send("removeMovement",id);
+        this.send("get target",this.movement.toSendingData());
+        let id = this.id;
+        this.others.forEach(other=>{
+            other.seeing.delete(id);
+            other.send("removeMovement",id);
+        });
     };
 }
 
 module.exports = {
     addUserToGame: function(player){
-        if(waitingGame == null){
-            player.send("wait",{"a":0});
-            player.game = waitingGame = new Game(player);
-        }else{
-            waitingGame.addPlayer(player);
-            waitingGame = null;
+        player.game = waitingGame;
+        if(waitingGame.addPlayer(player)){
+            waitingGame = new Game();
+        }else {
+            player.send("wait");
         }
     },
     addUser: function(id,send,color){
-        let user = new User(send,id,color);
+        let user = new User(send,id,color,[0,0]);
         users[id] = user;
         return user;
     },
@@ -284,5 +292,7 @@ module.exports = {
     },
     height: playerScreenX,
     width: playerScreenY,
-    speed: playerSpeed
+    speed: playerSpeed,
+    fieldWidth: width,
+    fieldHeight: height
 };

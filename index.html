@@ -63,7 +63,7 @@
             let screenHeight;
             let width;
             let height;
-            let other = {};
+            let others = {};
             let me = {};
             let positionOnScreen = [0,0];
             let isMouseDown = false;
@@ -90,43 +90,23 @@
                         }
                         return [dx,dy];
                     }
-                    // let allXDelta = point.x - user.position[0];
-                    // let allYDelta = point.y - user.position[1];
-                    // let a = allXDelta/allYDelta;
-                    // console.log(a);
-                    // //console.log(user);
-                    // console.log("point x "+point.x+" y "+point.y);
-                    // console.log("user position: x "+user.position[0]+" y "+user.position[1]);
-                    // console.log("allDX: "+allXDelta+" allDY: "+allYDelta);
-                    // let dx = speed*a/(a+1);
-                    // let dy = speed/(a+1);
-                    // console.log("x: "+dx+" dy: "+dy);
-                    // return [dx,dy];
                 }
                 function calcDirection(){
                     let a = !(player.position[0] > point.x); //true - right, false - left
                     let b = !(player.position[1] > point.y); //true - down , false - up
-                    // console.log("player position: x: "+player.position[0]+" y: "+player.position[1]);
-                    // console.log("point: x: "+point.x+" y: "+point.y);
-                    // console.log("direction: a: "+a+" b: "+b);
-                    // console.log(player.position[1]>point[1]);
                     return [a,b]; 
                 }
                 function isFinished(){
                     if(direction[0]){
                         if(direction[1]){
-                            //console.log("\\_");
                             return player.position[0] > point.x && player.position[1] > point.y;
                         }else{
-                            //console.log("/`");
                             return player.position[0] > point.x && player.position[1] < point.y;
                         }
                     }else {
                         if(direction[1]){
-                            //console.log("_/");
                             return player.position[0] < point.x && player.position[1] > point.y;
                         }else{
-                            //console.log("`\\");
                             return player.position[0] < point.x && player.position[1] < point.y;
                         }
                     }
@@ -152,9 +132,7 @@
             function debounce(f,ms){
                 let isCooldown = false;
                 return function() {
-                    //console.log("p");
                     if (isCooldown) return;
-                    //console.log("q");
                     f.apply(this, arguments);
                     isCooldown = true;
                     setTimeout(() => isCooldown = false, ms);
@@ -176,12 +154,14 @@
                 }else{
                     delete me.movement;
                 }
-                if("other" in msg){
-                    other.position = msg.other.position;
-                    if("movement" in msg.other){
-                        other.movement = new Movement(me,msg.other.movement.target);
-                    }else{
-                        delete other.movement;
+                for(let key in others){
+                    if(key in msg){
+                        others[key].position = msg[key].position;
+                        if("movement" in msg[key]){
+                            others[key].movement = new Movement(others[key],msg[key].movement.target);
+                        }else {
+                            delete others[key].movement;
+                        }
                     }
                 }
             });
@@ -192,6 +172,8 @@
                         ctx = document.getElementById("canvas").getContext("2d");
                         screenWidth = msg.width;
                         screenHeight = msg.height;
+                        width = msg.fieldWidth;
+                        height = msg.fieldHeight;
                         $("#canvas").click(function(){
                             if(state==0) socket.emit("started");
                         });
@@ -205,14 +187,14 @@
                     ctx.fillText("Нажмите на это что бы начать", 10, 50);
                     socket.on("get target",function(msg){
                         console.log("movement");
-                        if(msg.id == other.id){
-                            console.log("moving other");
-                            other.position = msg.movement.currentPosition;
-                            other.movement = new Movement(other,msg.movement.target);
-                        }else {
-                            console.log("moving me");
-                            console.log(me);
-                            me.movement = new Movement(me,msg.movement.target);
+                        if(msg.id == me.id){
+                            me.postion = msg.currentPosition;
+                            me.movement = new Movement(me,msg.target);
+                            return;
+                        }
+                        if(msg.id in others){
+                            others[msg.id].position = msg.currentPosition;
+                            others[msg.id].movement = new Movement(others[msg.id],msg.target);
                         }
                     });
                     $("#canvas").mousedown(function(a){
@@ -233,21 +215,21 @@
                         state = 1;
                     });
                     socket.on("start",function(msg){
-                        other = msg.other;
+                        others = msg.others;
                         console.log(msg);
                         me = msg.me;
-                        height = msg.height;
-                        width = msg.width;
                         calcPosOnScreen();
                         loopID = setInterval(function(){
                             if("movement" in me){
                                 me.movement.move();
                                 calcPosOnScreen();
                             }
-                            if("movement" in other){
-                                console.log("moving other");
-                                other.movement.move();
+                            for(let key in others){
+                                if("movement" in others[key]){
+                                    others[key].movement.move();
+                                }   
                             }
+
                             updateImage(bg);
                         },100);
                         state = 2;
@@ -257,14 +239,17 @@
                             if("movement" in me){
                                 delete me.movement;
                             }
-                        }else if(id==other.id){
-                            if("movement" in other){
-                                delete other.movement;
+                        }else {
+                            for(let key in others){
+                                if("movement" in others[key]) delete others[key].movement;
                             }
                         }
                     });
-                    socket.on("set player position",function(msg){
-                        other.position = msg;
+                    socket.on("set position",function(msg){
+                        console.log(others);
+                        for(let key in others){
+                            if(others[key].id==msg.id) others[key].position = msg.position
+                        }
                     });
                 },false);
             },false);
@@ -277,23 +262,20 @@
                 ctx.fillRect(x,y,blockWidth,blockHeight);
             }
             function drawPlayer(player){
-                if(player == undefined){
-                    //console.log(positionOnScreen);
-                    drawBlock((positionOnScreen[0])-(blockWidth/2),(positionOnScreen[1])-(blockHeight/2),me.color);
-                }else{
-                    if(!("position" in player)) return;
-
-                    drawBlock(player.position[0] - screenCenter[0] + (screenWidth)/2 - blockWidth/2,
-                        player.position[1] - screenCenter[1] + (screenHeight/2) - blockHeight/2,
-                        player.color);
-                }
+                if(!("position" in player)) return;
+                drawBlock(player.position[0] - screenCenter[0] + (screenWidth)/2 - blockWidth/2,
+                    player.position[1] - screenCenter[1] + (screenHeight/2) - blockHeight/2,
+                    player.color);
             }
             function updateImage(bg){
                 clear();
                 ctx.drawImage(bg,screenCenter[0]-(screenWidth/2),screenCenter[1]-(screenHeight/2),screenWidth,screenHeight,0,0,screenWidth,screenHeight);
                 if("movement" in me) drawTarget(me.movement.target);
-                drawPlayer();
-                drawPlayer(other);
+                drawPlayer(me);
+                for(let key in others){
+                    drawPlayer(others[key]);
+                }
+                //drawPlayer(other);
                 drawMap();
             }
         </script>
