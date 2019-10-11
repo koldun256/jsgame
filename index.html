@@ -9,6 +9,9 @@
         <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
         <script>
             const mapSize = [80,80];
+            let baseSize;
+            const baseColor = "#000000";
+            let basesPositions;
             function calcPosOnScreen(){
                 if(me.position[0]<(0.5*screenWidth)){
                     screenCenter[0] = screenWidth*0.5;
@@ -51,7 +54,17 @@
                 ctx.strokeStyle = "red";
                 ctx.stroke();
             }
+            let manaIndicatorSetting = {
+                offsets: [10,10],
+                size: [300,30],
+                colors: {
+                    active: "#40b0c7",
+                    notActive: "#30899c"
+                }
+            };
+            let maxMana;
             let speed;
+            let manaZonesSetting;
             let screenCenter = [0,0];
             let loopID;
             var socket = io();
@@ -75,7 +88,7 @@
                         return [0,speed];
                     }else if(point.y == user.position[1]){
                         return [speed,0];
-                    }else{    
+                    }else{
                         let allXDelta = point.x - user.position[0];
                         let allYDelta = point.y - user.position[1];
                         let dx;
@@ -129,6 +142,14 @@
                     }
                 };
             }
+            function isPlayerInManaZone(playerPos,basePos){
+                function calcDistance(pointA,pointB){
+                    return Math.abs(Math.sqrt((pointA[0]-pointB[0])**2 + (pointA[1]-pointB[1])**2));
+                }
+                let distance = calcDistance(playerPos,basePos);
+                let result = (distance > (manaZonesSetting.distance/2 - manaZonesSetting.width/2)) && (distance < (manaZonesSetting.distance/2 + manaZonesSetting.width/2));
+                return result;
+            }
             function debounce(f,ms){
                 let isCooldown = false;
                 return function() {
@@ -147,8 +168,9 @@
             addTarget = debounce(addTarget,100);
             socket.on("update data",function(msg){
                 console.log("updating data: ");
-                console.log(msg);
+                console.log(msg.me.position);
                 me.position = msg.me.position;
+                me.mana = msg.me.mana;
                 if("movement" in msg.me){
                     me.movement = new Movement(me,msg.me.movement.target);
                 }else{
@@ -166,18 +188,19 @@
                 }
             });
             socket.on("setsize",function(msg){
-                        speed = msg.speed;
-                        $("#canvas").attr("height",msg.height+"px");
-                        $("#canvas").attr("width",msg.width+"px");
-                        ctx = document.getElementById("canvas").getContext("2d");
-                        screenWidth = msg.width;
-                        screenHeight = msg.height;
-                        width = msg.fieldWidth;
-                        height = msg.fieldHeight;
-                        $("#canvas").click(function(){
-                            if(state==0) socket.emit("started");
-                        });
-                    });
+                speed = msg.speed;
+                $("#canvas").attr("height",msg.height+"px");
+                $("#canvas").attr("width",msg.width+"px");
+                ctx = document.getElementById("canvas").getContext("2d");
+                screenWidth = msg.width;
+                screenHeight = msg.height;
+                width = msg.fieldWidth;
+                height = msg.fieldHeight;
+                baseSize = msg.baseSize;
+                $("#canvas").click(function(){
+                    if(state==0) socket.emit("started");
+                });
+            });
             window.addEventListener("load",function(){
                     
                 let bg = new Image();
@@ -216,13 +239,28 @@
                     });
                     socket.on("start",function(msg){
                         others = msg.others;
-                        console.log(msg);
                         me = msg.me;
+                        basesPositions = msg.basesPositions;
+                        me.isInManaZone = false;
+                        manaZonesSetting = msg.manaRegenZone;
+                        maxMana = msg.maxMana;
                         calcPosOnScreen();
                         loopID = setInterval(function(){
                             if("movement" in me){
                                 me.movement.move();
                                 calcPosOnScreen();
+                            }
+                            me.isInManaZone = false;
+                            basesPositions.forEach(base=>{
+                                if(isPlayerInManaZone(me.position,base)){
+                                    me.isInManaZone = true;
+                                }
+                            });
+                            if(me.isInManaZone){
+                                me.mana += manaZonesSetting.regen;
+                                if(me.mana > maxMana){
+                                    me.mana = maxMana;
+                                }
                             }
                             for(let key in others){
                                 if("movement" in others[key]){
@@ -246,7 +284,6 @@
                         }
                     });
                     socket.on("set position",function(msg){
-                        console.log(others);
                         for(let key in others){
                             if(others[key].id==msg.id) others[key].position = msg.position
                         }
@@ -260,6 +297,39 @@
             function drawBlock(x,y,color){
                 ctx.fillStyle = color;
                 ctx.fillRect(x,y,blockWidth,blockHeight);
+            }
+            function drawManaIndicator(){
+                ctx.fillStyle = "white"
+                ctx.fillRect(...manaIndicatorSetting.offsets,...manaIndicatorSetting.size);
+                ctx.fillStyle = manaIndicatorSetting.colors[me.isInManaZone?"active":"notActive"];
+                ctx.fillRect(...manaIndicatorSetting.offsets,me.mana/maxMana*manaIndicatorSetting.size[0],manaIndicatorSetting.size[1]);
+                ctx.strokeStyle = "black";
+                ctx.lineWidth = 2;
+                ctx.strokeRect(...manaIndicatorSetting.offsets,...manaIndicatorSetting.size);
+            }
+            function drawBases(){
+                basesPositions.forEach(basePosition => {
+                    ctx.globalAlpha = 0.5;
+                    ctx.fillStyle = baseColor;
+                    ctx.fillRect(   basePosition[0] - screenCenter[0] + screenWidth/2 -baseSize/2,
+                                    basePosition[1] - screenCenter[1] + screenHeight/2 -baseSize/2,
+                                    baseSize,baseSize);
+                    ctx.globalAlpha = 1;
+                });
+            }
+            function drawManaZones(){
+                basesPositions.forEach(zoneCenter=>{
+                    
+                    ctx.beginPath();
+                    ctx.arc(zoneCenter[0] - screenCenter[0] + screenWidth/2,
+                            zoneCenter[1] - screenCenter[1] + screenHeight/2,
+                            manaZonesSetting.distance/2, 0, 2 * Math.PI, false);
+                    ctx.globalAlpha = 0.5;
+                    ctx.lineWidth = manaZonesSetting.width;
+                    ctx.strokeStyle = "#599ede";
+                    ctx.stroke();
+                    ctx.globalAlpha = 1;
+                });
             }
             function drawPlayer(player){
                 if(!("position" in player)) return;
@@ -275,8 +345,11 @@
                 for(let key in others){
                     drawPlayer(others[key]);
                 }
+                drawBases();
+                drawManaZones();
                 //drawPlayer(other);
                 drawMap();
+                drawManaIndicator();
             }
         </script>
     </body>

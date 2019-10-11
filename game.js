@@ -1,11 +1,12 @@
 const frameDelay = 100;
+const maxMana = 2000;
 let playersInTeam = 1;
 let teamsInGame = 2;
 let startMana = 1000;
 let manaRegen = 10;
 let baseSize = 100;
-let manaZoneWidth = 20;
-let manaZoneDistance = 100;
+let manaZoneWidth = 100;
+let manaZoneDistance = 1500;
 let updateDataDelay = 1000;
 let playerSpeed = 5;
 let height = 6000;
@@ -22,7 +23,8 @@ function isPlayerInManaZone(playerPos,basePos){
         return Math.abs(Math.sqrt((pointA[0]-pointB[0])**2 + (pointA[1]-pointB[1])**2));
     }
     let distance = calcDistance(playerPos,basePos);
-    return (distance > manaZoneDistance) && (distance < (manaZoneDistance + manaZoneWidth));
+    let result = (distance > (manaZoneDistance/2 - manaZoneWidth/2)) && (distance < (manaZoneDistance/2 + manaZoneWidth/2));
+    return result;
 }
 function Collider(center,size){
     this.sizeX = size[0]/2;
@@ -57,7 +59,13 @@ function Game(){
             if("movement" in player){
                 player.movement.move();
                 player.isOnBase = player.collider.isTouching(player.team.baseCollider);
-                if(player.isInManaZone = isPlayerInManaZone(player.position,player.team.basePosition)) player.mana += manaRegen;
+                player.isInManaZone = isPlayerInManaZone(player.position,player.team.basePosition);
+            }
+            if(player.isInManaZone){
+                player.mana += manaRegen;
+                if(player.mana > maxMana){
+                    player.mana = maxMana;
+                }
             }
             player.others.forEach(function(other){
                 if(player.screenCollider.isTouching(other.collider)){
@@ -77,7 +85,7 @@ function Game(){
     };
     function updateLoop(){
         this.send("update data",function(player){
-            let message = {me: {position: player.position}};
+            let message = {me: {position: player.position, mana: player.mana}};
             if("movement" in player){
                 message.me.movement = player.movement.toSendingData();
             }
@@ -102,9 +110,22 @@ function Game(){
         });
     }
     this.start = function(){
-        this.players.forEach(player=>player.position = player.team.basePosition);
+        this.players.forEach(player=>player.position = [...player.team.basePosition]);
         this.send("start",function(player){
-            let message = {me:{position: player.position, color: player.color, id: player.id},others:{}};
+            let message = {
+                me:{
+                    position: player.position,
+                    color: player.color,
+                    id: player.id,
+                    mana: player.mana,
+                    basePosition: player.team.basePosition},
+                others: {},
+                basesPositions: basesPositions,
+                manaRegenZone: {
+                    width: manaZoneWidth,
+                    distance: manaZoneDistance,
+                    regen: manaRegen},
+                maxMana: maxMana};
             player.others.forEach(function(other){
                 message.others[other.id] = {color: other.color};
                 if(player.screenCollider.isTouching(other.collider)){
@@ -294,5 +315,5 @@ module.exports = {
     width: playerScreenY,
     speed: playerSpeed,
     fieldWidth: width,
-    fieldHeight: height
-};
+    fieldHeight: height,
+    baseSize: baseSize};
