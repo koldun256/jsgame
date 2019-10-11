@@ -4,7 +4,7 @@ let playersInTeam = 1;
 let teamsInGame = 2;
 let startMana = 1000;
 let manaRegen = 10;
-let baseSize = 100;
+let baseSize = [100,100];
 let manaZoneWidth = 100;
 let manaZoneDistance = 1500;
 let updateDataDelay = 1000;
@@ -246,7 +246,7 @@ function Movement(user,point){
     };
 }
 function Team(basePosition){
-    this.baseCollider = new Collider(basePosition, baseSize);
+    this.baseCollider = new Collider(basePosition, baseSize[0]);
     this.basePosition = basePosition;
     this.players = [];
     this.others = [];

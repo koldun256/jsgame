@@ -44,6 +44,8 @@
                 ctx.fillRect(   screenWidth-(mapSize[0]+10)+(me.position[0]/width*mapSize[0]),
                                 10+(me.position[1]/height*mapSize[1]),
                                 4,4);
+                drawBases(true);
+                drawManaZones(true);
             }
             function drawTarget(globalPosition){
                 let x = globalPosition.x-screenCenter[0] + (screenWidth/2);
@@ -167,8 +169,6 @@
             };
             addTarget = debounce(addTarget,100);
             socket.on("update data",function(msg){
-                console.log("updating data: ");
-                console.log(msg.me.position);
                 me.position = msg.me.position;
                 me.mana = msg.me.mana;
                 if("movement" in msg.me){
@@ -307,25 +307,41 @@
                 ctx.lineWidth = 2;
                 ctx.strokeRect(...manaIndicatorSetting.offsets,...manaIndicatorSetting.size);
             }
-            function drawBases(){
+            function drawBases(isOnMap){
                 basesPositions.forEach(basePosition => {
                     ctx.globalAlpha = 0.5;
                     ctx.fillStyle = baseColor;
-                    ctx.fillRect(   basePosition[0] - screenCenter[0] + screenWidth/2 -baseSize/2,
-                                    basePosition[1] - screenCenter[1] + screenHeight/2 -baseSize/2,
-                                    baseSize,baseSize);
-                    ctx.globalAlpha = 1;
+                    if(isOnMap){
+                        let compressing = [mapSize[0]/width,mapSize[1]/height];
+                        ctx.fillRect(   screenWidth-(mapSize[0]+10)+basePosition[0]/width*mapSize[0],
+                                        basePosition[1]/height*mapSize[1]+10,
+                                        Math.ceil(baseSize[0]*compressing[0]),
+                                        Math.ceil(baseSize[1]*compressing[1]));
+                    }else{
+                        ctx.fillRect(   basePosition[0] - screenCenter[0] + screenWidth/2 -baseSize[0]/2,
+                            basePosition[1] - screenCenter[1] + screenHeight/2 -baseSize[1]/2,
+                            baseSize[0],baseSize[1]);
+                    }
+                        ctx.globalAlpha = 1;
                 });
             }
-            function drawManaZones(){
+            function drawManaZones(isOnMap){
                 basesPositions.forEach(zoneCenter=>{
                     
                     ctx.beginPath();
-                    ctx.arc(zoneCenter[0] - screenCenter[0] + screenWidth/2,
+                    if(isOnMap){
+                        let compressing = [mapSize[0]/width,mapSize[1]/height];
+                        ctx.arc(screenWidth-(mapSize[0]+10)+zoneCenter[0]/width*mapSize[0],
+                                10+zoneCenter[1]/height*mapSize[1],
+                                manaZonesSetting.distance/2*compressing[0],0,Math.PI*2,false);
+                        ctx.lineWidth = manaZonesSetting.width*compressing[0];
+                    }else{
+                        ctx.arc(zoneCenter[0] - screenCenter[0] + screenWidth/2,
                             zoneCenter[1] - screenCenter[1] + screenHeight/2,
                             manaZonesSetting.distance/2, 0, 2 * Math.PI, false);
+                            ctx.lineWidth = manaZonesSetting.width;
+                    }
                     ctx.globalAlpha = 0.5;
-                    ctx.lineWidth = manaZonesSetting.width;
                     ctx.strokeStyle = "#599ede";
                     ctx.stroke();
                     ctx.globalAlpha = 1;
@@ -346,9 +362,9 @@
                     drawPlayer(others[key]);
                 }
                 drawBases();
-                drawManaZones();
+                drawManaZones(false);
                 //drawPlayer(other);
-                drawMap();
+                drawMap(false);
                 drawManaIndicator();
             }
         </script>
