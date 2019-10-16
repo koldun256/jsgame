@@ -58,7 +58,7 @@ let actions = [{
             },action.values[0]*1000);
         });
     }],
-    src: "graphic/spells/stun.png"
+    src: "spells/stun.png"
 }];
 let teamsInGame = 2;
 let startMana = 1000;
@@ -67,7 +67,7 @@ let baseSize = [100,100];
 let manaZoneWidth = 100;
 let manaZoneDistance = 1500;
 let updateDataDelay = 1000;
-let playerSpeed = 10;
+let playerSpeed = 5;
 let height = 6000;
 let width = 6000;
 let basesPositions = [[width/4,height/2],[width*0.75,height/2]];

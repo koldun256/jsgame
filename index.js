@@ -7,7 +7,7 @@ var io = require('socket.io')(http);
 var game = require("./game");
 var randomColor = require("randomcolor");
 let dir = path.join(__dirname,'graphic');
-app.use(express.static(dir));
+app.use(express.static('graphic'));
 app.use(favicon(__dirname+"/i.ico"));
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
