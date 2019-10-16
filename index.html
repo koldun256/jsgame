@@ -9,6 +9,23 @@
         <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
         <script>
             const mapSize = [80,80];
+            let testSpellsMessage = [
+                {
+                    name: "Стан",
+                    setting: [4],
+                    selectors: [{name: "Остальные",setting:[],selectors:[],type: "player"}]
+                },
+                {
+                    name: "Стан",
+                    setting: [7],
+                    selectors: [{name: "Остальные",setting:[],selectors:[],type: "player"}]
+                },
+                {
+                    name: "Стан",
+                    setting: [10],
+                    selectors: [{name: "Остальные",setting:[],selectors:[],type: "player"}]
+                },
+            ];
             let baseSize;
             const baseColor = "#000000";
             let basesPositions;
@@ -61,10 +78,13 @@
                 size: [300,30],
                 colors: {
                     active: "#40b0c7",
-                    notActive: "#30899c"
+                    notActive: "#30899c",
+                    little: "#a83242"
                 }
             };
+            let buttons = [{},{},{}];
             let maxMana;
+            let littleMana = false;
             let speed;
             let manaZonesSetting;
             let screenCenter = [0,0];
@@ -78,6 +98,7 @@
             let screenHeight;
             let width;
             let height;
+            let stunLeft = 0;
             let others = {};
             let me = {};
             let positionOnScreen = [0,0];
@@ -168,6 +189,13 @@
                 socket.emit("setTarget",{x:x,y:y});
             };
             addTarget = debounce(addTarget,100);
+            socket.on("spelled",function(msg){
+                switch(msg.type){
+                    case "text":
+                        alert(msg.setting.text);
+                        break;
+                }
+            });
             socket.on("update data",function(msg){
                 me.position = msg.me.position;
                 me.mana = msg.me.mana;
@@ -188,6 +216,14 @@
                 }
             });
             socket.on("setsize",function(msg){
+                function generateButtonsPositions(){
+                    const buttonsXsize = 100;
+                    const buttonsYsize = 100;
+                    const buttonsOffsets = 15;
+                    return [[buttonsOffsets,screenHeight-(buttonsOffsets+buttonsYsize),buttonsXsize,buttonsYsize],
+                            [buttonsOffsets*2+buttonsXsize,screenHeight-(buttonsOffsets+buttonsYsize),buttonsXsize,buttonsYsize],
+                            [buttonsOffsets*3+buttonsXsize*2,screenHeight-(buttonsOffsets+buttonsYsize),buttonsXsize,buttonsYsize]];
+                }
                 speed = msg.speed;
                 $("#canvas").attr("height",msg.height+"px");
                 $("#canvas").attr("width",msg.width+"px");
@@ -196,103 +232,159 @@
                 screenHeight = msg.height;
                 width = msg.fieldWidth;
                 height = msg.fieldHeight;
+                let buttonsPositions = generateButtonsPositions();
+                buttons.forEach(function(button,index){
+                    button.position = buttonsPositions[index];
+                });
                 baseSize = msg.baseSize;
                 $("#canvas").click(function(){
-                    if(state==0) socket.emit("started");
+                    if(state==0) socket.emit("started",{spells: testSpellsMessage});
                 });
             });
             window.addEventListener("load",function(){
                     
                 let bg = new Image();
                 bg.src = "graphic\\bg.png";
-                bg.addEventListener("load",function(){
-                    ctx.font = "20px serif";
-                    ctx.fillText("Нажмите на это что бы начать", 10, 50);
-                    socket.on("get target",function(msg){
-                        console.log("movement");
-                        if(msg.id == me.id){
-                            me.postion = msg.currentPosition;
-                            me.movement = new Movement(me,msg.target);
-                            return;
-                        }
-                        if(msg.id in others){
-                            others[msg.id].position = msg.currentPosition;
-                            others[msg.id].movement = new Movement(others[msg.id],msg.target);
-                        }
-                    });
-                    $("#canvas").mousedown(function(a){
+                ctx.font = "20px serif";
+                ctx.fillText("Нажмите на это что бы начать", 10, 50);
+                socket.on("get target",function(msg){
+                    console.log("movement");
+                    if(msg.id == me.id){
+                        me.postion = msg.currentPosition;
+                        me.movement = new Movement(me,msg.target);
+                        return;
+                    }
+                    if(msg.id in others){
+                        others[msg.id].position = msg.currentPosition;
+                        others[msg.id].movement = new Movement(others[msg.id],msg.target);
+                    }
+                });
+                $("#canvas").mousedown(function(a){
+                    if(state!=2) return;
+                    let result = checkSpellButton([a.pageX,a.pageY]);
+                    if(result == -1){
                         isMouseDown = true;
-                        if(state!=2) return;
                         addTarget(...localToGlobalCoords(a.clientX,a.clientY));
+                    }else{
+                        socket.emit("spell",result);
+                    }
+                });
+                $("#canvas").mouseup(function(){
+                    isMouseDown = false;
+                });
+                $("#canvas").mousemove(function(a){
+                    if(state!=2) return;
+                    if(isMouseDown) addTarget(...localToGlobalCoords(a.clientX,a.clientY));
+                });
+                socket.on("wait",function(){
+                    clear();
+                    ctx.fillText("Ждите", 10, 50);
+                    state = 1;
+                });
+                socket.on("start",function(msg){
+                    buttons.forEach(function(button,index){
+                        button.manaCost = msg.me.spells[index].manaCost;
+                        button.image = new Image();
+                        button.image.src = msg.me.spells[index].src;
                     });
-                    $("#canvas").mouseup(function(){
-                        isMouseDown = false;
-                    });
-                    $("#canvas").mousemove(function(a){
-                        if(state!=2) return;
-                        if(isMouseDown) addTarget(...localToGlobalCoords(a.clientX,a.clientY));
-                    });
-                    socket.on("wait",function(){
-                        clear();
-                        ctx.fillText("Ждите", 10, 50);
-                        state = 1;
-                    });
-                    socket.on("start",function(msg){
-                        others = msg.others;
-                        me = msg.me;
-                        basesPositions = msg.basesPositions;
+                    others = msg.others;
+                    me = msg.me;
+                    me.state = "active";
+                    basesPositions = msg.basesPositions;
+                    me.isInManaZone = false;
+                    manaZonesSetting = msg.manaRegenZone;
+                    maxMana = msg.maxMana;
+                    calcPosOnScreen();
+                    loopID = setInterval(function(){
+                        if("movement" in me){
+                            me.movement.move();
+                            calcPosOnScreen();
+                        }
                         me.isInManaZone = false;
-                        manaZonesSetting = msg.manaRegenZone;
-                        maxMana = msg.maxMana;
-                        calcPosOnScreen();
-                        loopID = setInterval(function(){
-                            if("movement" in me){
-                                me.movement.move();
-                                calcPosOnScreen();
+                        basesPositions.forEach(base=>{
+                            if(isPlayerInManaZone(me.position,base)){
+                                me.isInManaZone = true;
                             }
-                            me.isInManaZone = false;
-                            basesPositions.forEach(base=>{
-                                if(isPlayerInManaZone(me.position,base)){
-                                    me.isInManaZone = true;
-                                }
-                            });
-                            if(me.isInManaZone){
-                                me.mana += manaZonesSetting.regen;
-                                if(me.mana > maxMana){
-                                    me.mana = maxMana;
-                                }
-                            }
-                            for(let key in others){
-                                if("movement" in others[key]){
-                                    others[key].movement.move();
-                                }   
-                            }
-
-                            updateImage(bg);
-                        },100);
-                        state = 2;
-                    });
-                    socket.on("removeMovement",id=>{
-                        if(id==me.id){
-                            if("movement" in me){
-                                delete me.movement;
-                            }
-                        }else {
-                            for(let key in others){
-                                if("movement" in others[key]) delete others[key].movement;
+                        });
+                        if(me.isInManaZone){
+                            me.mana += manaZonesSetting.regen;
+                            if(me.mana > maxMana){
+                                me.mana = maxMana;
                             }
                         }
-                    });
-                    socket.on("set position",function(msg){
                         for(let key in others){
-                            if(others[key].id==msg.id) others[key].position = msg.position
+                            if("movement" in others[key]){
+                                others[key].movement.move();
+                            }   
                         }
-                    });
-                },false);
+
+                        updateImage(bg);
+                    },100);
+                    state = 2;
+                });
+                socket.on("removeMovement",id=>{
+                    if(id==me.id){
+                        if("movement" in me){
+                            delete me.movement;
+                        }
+                    }else {
+                        for(let key in others){
+                            if("movement" in others[key]) delete others[key].movement;
+                        }
+                    }
+                });
+                socket.on("activate",() => {
+                    console.log("ccccc");
+                    me.state="active";});
+                socket.on("stunned",function(delay){
+                    stunLeft = delay;
+                    console.log("bbbbbb");
+                    me.state = "stunned";
+                    setInterval(()=>{
+                        stunLeft--;
+                        if(stunLeft < 0) stunLeft = 0
+                    },1000);
+                });
+                socket.on("not enough mana",function(){
+                    littleMana = true;
+                    setTimeout(()=>littleMana=false,1000);
+                });
+                socket.on("set position",function(msg){
+                    for(let key in others){
+                        if(others[key].id==msg.id) others[key].position = msg.position;
+                    }
+                });
             },false);
-            
+            function checkSpellButton(position){
+                let result = -1;
+                console.log(position);
+                buttons.forEach(function(button,index){
+                    let butPosition = button.position;
+                    if( position[0] < (butPosition[0]+butPosition[2])&&
+                        position[0] > butPosition[0] &&
+                        position[1] < butPosition[1]+butPosition[3]&&
+                        position[1] > butPosition[1]){
+                        
+                        result = index;
+                    }
+                });
+                console.log(result);
+                return result;
+            }
             function clear(){
                 ctx.clearRect(0, 0, document.getElementById("canvas").width, document.getElementById("canvas").height);
+            }
+            function drawSpellButtons(){
+                buttons.forEach(function(button){
+                    let butPosition = button.position;
+                    ctx.strokeStyle = "black";
+                    ctx.lineWidth = 5;
+                    ctx.clearRect(...butPosition);
+                    ctx.strokeRect(...butPosition);
+                    ctx.fillStyle = "black";
+                    ctx.font = "20px serif";
+                    ctx.fillText(button.manaCost,button.position[0],button.position[1]+butPosition[3]-20);
+                });
             }
             function drawBlock(x,y,color){
                 ctx.fillStyle = color;
@@ -301,7 +393,7 @@
             function drawManaIndicator(){
                 ctx.fillStyle = "white"
                 ctx.fillRect(...manaIndicatorSetting.offsets,...manaIndicatorSetting.size);
-                ctx.fillStyle = manaIndicatorSetting.colors[me.isInManaZone?"active":"notActive"];
+                ctx.fillStyle = manaIndicatorSetting.colors[littleMana?"little":(me.isInManaZone?"active":"notActive")];
                 ctx.fillRect(...manaIndicatorSetting.offsets,me.mana/maxMana*manaIndicatorSetting.size[0],manaIndicatorSetting.size[1]);
                 ctx.strokeStyle = "black";
                 ctx.lineWidth = 2;
@@ -355,17 +447,26 @@
             }
             function updateImage(bg){
                 clear();
-                ctx.drawImage(bg,screenCenter[0]-(screenWidth/2),screenCenter[1]-(screenHeight/2),screenWidth,screenHeight,0,0,screenWidth,screenHeight);
-                if("movement" in me) drawTarget(me.movement.target);
-                drawPlayer(me);
-                for(let key in others){
-                    drawPlayer(others[key]);
+                if(me.state == "active"){
+                    ctx.drawImage(bg,screenCenter[0]-(screenWidth/2),screenCenter[1]-(screenHeight/2),screenWidth,screenHeight,0,0,screenWidth,screenHeight);
+                    if("movement" in me) drawTarget(me.movement.target);
+                    drawPlayer(me);
+                    for(let key in others){
+                        drawPlayer(others[key]);
+                    }
+                    drawBases();
+                    drawManaZones(false);
+                    //drawPlayer(other);
+                    drawMap(false);
+                    drawManaIndicator();
+                    drawSpellButtons();
+                }else {
+                    console.log("aaaaaa");
+                    ctx.font = "40px arial";
+                    ctx.fillStyle = "black";
+                    ctx.fillText("Вы умерли",10,20);
+                    ctx.fillText(`До возрождения ${stunLeft}`,10,70);
                 }
-                drawBases();
-                drawManaZones(false);
-                //drawPlayer(other);
-                drawMap(false);
-                drawManaIndicator();
             }
         </script>
     </body>

@@ -1,6 +1,65 @@
 const frameDelay = 100;
 const maxMana = 2000;
 let playersInTeam = 1;
+let selectors = {
+    player: [
+        {
+            name: "Остальные",
+            defenition: "Выбирает всех игроков игры кроме тебя",
+            setting:[],
+            startValues:[],
+            manaCost: ()=>{return 3},
+            selectors: [],
+            validValues: [],
+            onUse: function(){},
+            checkSelect: function(){
+                let selector = this;
+                return {result: selector.caster.others, isFinished: true};
+            },
+            onSelect:[]
+        }
+    ]
+};
+let actions = [{
+    name: "Стан",
+    definishion: "Игрок на хъ секунд тепряет возможность что-либо делать, после чего телепортируется на базу",
+    actionManaCost: function(){
+        return 200+this.values[0]*40;
+    },
+    spellManaCost: function(AMC,SMCs){
+        return AMC*SMCs[0];
+    },
+    setting: [{type: "number",name: "Длительность стана"}],
+    startValues: [10],
+    validValues: [function(newValue){
+        if(typeof newValue == "number"){
+            return newValue >= 1 && newValue <=20;
+        }
+        return false;
+    }],
+    selectorsSetting: [{type: "player",
+                name: "Игрок, который будет убит"}],
+    onCast: function(){
+        return {activateSelectors: [this.selectors[0]]};
+    },
+    onSelect: [function(selectorResult){
+        let action = this;
+        selectorResult.forEach(function(player){
+            player.state = "stunned";
+            if("movement" in player) delete player.movement
+            player.send("stunned",action.values[0]);
+            console.log(action.values[0]);
+            setTimeout(function(){
+                player.position = player.team.basePosition;
+                player.state = "active";
+                player.send("activate");
+                player.mana = 0;
+                console.log(";");
+            },action.values[0]*1000);
+        });
+    }],
+    src: "graphic\\spells\\text.png"
+}];
 let teamsInGame = 2;
 let startMana = 1000;
 let manaRegen = 10;
@@ -8,7 +67,7 @@ let baseSize = [100,100];
 let manaZoneWidth = 100;
 let manaZoneDistance = 1500;
 let updateDataDelay = 1000;
-let playerSpeed = 5;
+let playerSpeed = 10;
 let height = 6000;
 let width = 6000;
 let basesPositions = [[width/4,height/2],[width*0.75,height/2]];
@@ -48,6 +107,8 @@ function Collider(center,size){
 }
 function Game(){
     this.players = [];
+    this.activeSelectors = [];
+    let selectorsLoops = [];
     let playersCount = 0;
     const maxPlayers = teamsInGame * playersInTeam;
     this.teams = [];
@@ -55,6 +116,7 @@ function Game(){
     let updateLoopID;
     let loop = function(){
         this.loops++;
+        let game = this;
         this.players.forEach(function(player){
             if("movement" in player){
                 player.movement.move();
@@ -81,6 +143,16 @@ function Game(){
                     player.seeing.delete(other.id);
                 }
             });
+        });
+
+        this.activeSelectors.forEach(function(selector,index,arr){
+            let result = selector.checkSelect();
+            if(result.result){
+                selector.sendToParent(result.result);
+            }
+            if(result.isFinished){
+                arr.splice(index,1);
+            }
         });
     };
     function updateLoop(){
@@ -112,13 +184,16 @@ function Game(){
     this.start = function(){
         this.players.forEach(player=>player.position = [...player.team.basePosition]);
         this.send("start",function(player){
+            let spells = [];
+            player.spells.forEach(spell=>spells.push(spell.toSendingData()));
             let message = {
                 me:{
                     position: player.position,
                     color: player.color,
                     id: player.id,
                     mana: player.mana,
-                    basePosition: player.team.basePosition},
+                    basePosition: player.team.basePosition,
+                    spells: spells},
                 others: {},
                 basesPositions: basesPositions,
                 manaRegenZone: {
@@ -200,7 +275,6 @@ function Movement(user,point){
     function calcDirection(){
         let a = player.position[0] < point.x; //true - right, false - left
         let b = player.position[1] < point.y; //true - down , false - up
-        // console.log("direction: "+a+" "+b);
         return [a,b]; 
     }
     function isFinished(){
@@ -218,7 +292,6 @@ function Movement(user,point){
                 result = player.position[0] < point.x && player.position[1] < point.y;
             }
         }
-        // console.log("is finished: "+result+", move count: "+moveCount);
         return result;
     }
     let direction = calcDirection();
@@ -239,11 +312,81 @@ function Movement(user,point){
         player.screenCollider.position = player.collider.position = player.position;
         moveCount++;
         if(isFinished()){
-            console.log("movement finished||||||||||||||||||||||||||||||||||||||||||||");
-            
             delete player.movement;
         }
     };
+}
+function Spell(player){
+    this.action = {};
+    this.player = player;
+    function addAction(action){
+        let n = Object.assign({selectors:[]},action);
+        this.action = n;
+        this.action.values = n.startValues;
+    };
+    function addSelector(destSelector,selector){
+        destSelector = Object.assign({},selector);
+    };
+    function changeActionValue(newValue,id){
+        if(this.action.validValues[id](newValue)){
+            this.action.values[id] = newValue;
+        }
+    };
+    this.manaCost = 0;
+    this.cast = function(){
+        return this.action.onCast().activateSelectors;
+    }
+    this.toSendingData = function(){
+        let action = this.action;
+        return {src: action.src,manaCost: action.curManaCost};
+    }
+    this.fromSendingData = function(sendingData){
+        let spell = this;
+        actions.forEach(curAction=>{
+            if(sendingData.name == curAction.name){
+                addAction.apply(spell,[curAction]);
+            }
+        });
+        function calcManaCost(action){
+            function calcManaCostS(selectors){
+                let result = [];
+                selectors.forEach(selector=>result.push(selector.manaCost(calcManaCostS(selector.selectors))));
+                return result;
+            }
+            return action.spellManaCost(action.actionManaCost(),calcManaCostS(action.selectors));
+        }
+        function analiseSelector(selector){
+            let trueSelector;
+            selectors[selector.type].forEach(a=>{
+                if(a.name == selector.name){
+                    trueSelector = Object.assign({caster: player},a);
+                }
+            });
+            selector.setting.forEach((setting,index)=>{
+                if(trueSelector.validValues(setting,index)){
+                    trueSelector.values[index] = setting;
+                }
+            });
+            selector.selectors.forEach(function(rawSelector,index){
+                let newSelector = analiseSelector(rawSelector);
+                newSelector.sendToParent = function(result){trueSelector.onSelect[index].apply(trueSelector,[result])};
+                trueSelector[index] = newSelector;
+            });
+            return trueSelector;
+
+        }
+        sendingData.selectors.forEach(function(selector,index){
+            let newSelector = analiseSelector(selector);
+            newSelector.sendToParent = function(result){spell.action.onSelect[index].apply(spell.action,[result])}
+            spell.action.selectors[index] = newSelector;
+        });
+        sendingData.setting.forEach(function(value,id){
+            if(spell.action.validValues[id](value)){
+                spell.action.values[id] = value;
+            }
+        });
+        spell.manaCost = this.action.curManaCost = calcManaCost(this.action);
+    }
 }
 function Team(basePosition){
     this.baseCollider = new Collider(basePosition, baseSize[0]);
@@ -264,6 +407,8 @@ function Team(basePosition){
 }
 function User(send,id,color,position){
     this.isOnBase = true;
+    this.spells = [];
+    this.state = "active";
     this.isInManaZone = false;
     this.others = [];
     this.id = id;
@@ -282,8 +427,16 @@ function User(send,id,color,position){
             position:   this.position,
             color:      this.color };
     };
+    this.cast = function(index){
+        let game = this.game;
+        if(this.mana>=this.spells[index].manaCost){
+            this.mana -= this.spells[index].manaCost;
+            this.spells[index].cast().forEach(spell=>game.activeSelectors.push(spell));
+        }else{
+            this.send("not enough mana");
+        }
+    };
     this.createMovement = function(point){
-        console.log("new movement||||||||||||||||||||||||||||||||||||||||||||||||||||||");
         this.movement = new Movement(this,point);
         this.send("get target",this.movement.toSendingData());
         let id = this.id;
@@ -295,8 +448,13 @@ function User(send,id,color,position){
 }
 
 module.exports = {
-    addUserToGame: function(player){
+    addUserToGame: function(player,spells){
         player.game = waitingGame;
+        spells.forEach(spell=>{
+            let newSpell = new Spell(player);
+            newSpell.fromSendingData(spell);
+            player.spells.push(newSpell);
+        });
         if(waitingGame.addPlayer(player)){
             waitingGame = new Game();
         }else {
