@@ -59,6 +59,42 @@ let actions = [{
         });
     }],
     src: "spells/stun.png"
+},
+{
+    name: "Заморозка",
+    definishion: "Игрок на хъ секунд тепряет возможность что-либо делать",
+    actionManaCost: function(){
+        return this.values[0]*40;
+    },
+    spellManaCost: function(AMC,SMCs){
+        return AMC*SMCs[0];
+    },
+    setting: [{type: "number",name: "Длительность заморозки"}],
+    startValues: [10],
+    validValues: [function(newValue){
+        if(typeof newValue == "number"){
+            return newValue >= 1 && newValue <=20;
+        }
+        return false;
+    }],
+    selectorsSetting: [{type: "player",
+                name: "Игрок, который будет убит"}],
+    onCast: function(){
+        return {activateSelectors: [this.selectors[0]]};
+    },
+    onSelect: [function(selectorResult){
+        let action = this;
+        selectorResult.forEach(function(player){
+            player.state = "freezed";
+            if("movement" in player) delete player.movement
+            player.send("freezed",action.values[0]);
+            setTimeout(function(){
+                player.state = "active";
+                player.send("activate");
+            },action.values[0]*1000);
+        });
+    }],
+    src: "spells/freeze.png"
 }];
 let teamsInGame = 2;
 let startMana = 1000;

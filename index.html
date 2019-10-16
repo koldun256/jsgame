@@ -11,7 +11,7 @@
             const mapSize = [80,80];
             let testSpellsMessage = [
                 {
-                    name: "Стан",
+                    name: "Заморозка",
                     setting: [4],
                     selectors: [{name: "Остальные",setting:[],selectors:[],type: "player"}]
                 },
@@ -21,7 +21,7 @@
                     selectors: [{name: "Остальные",setting:[],selectors:[],type: "player"}]
                 },
                 {
-                    name: "Стан",
+                    name: "Заморозка",
                     setting: [10],
                     selectors: [{name: "Остальные",setting:[],selectors:[],type: "player"}]
                 },
@@ -99,6 +99,7 @@
             let width;
             let height;
             let stunLeft = 0;
+            let freezeLeft = 0;
             let others = {};
             let me = {};
             let positionOnScreen = [0,0];
@@ -260,11 +261,13 @@
                 $("#canvas").mousedown(function(a){
                     if(state!=2) return;
                     let result = checkSpellButton([a.pageX,a.pageY]);
-                    if(result == -1){
-                        isMouseDown = true;
-                        addTarget(...localToGlobalCoords(a.clientX,a.clientY));
-                    }else{
-                        socket.emit("spell",result);
+                    if(me.state == "active"){
+                        if(result == -1){
+                            isMouseDown = true;
+                            addTarget(...localToGlobalCoords(a.clientX,a.clientY));
+                        }else{
+                            socket.emit("spell",result);
+                        }
                     }
                 });
                 $("#canvas").mouseup(function(){
@@ -340,6 +343,14 @@
                     setInterval(()=>{
                         stunLeft--;
                         if(stunLeft < 0) stunLeft = 0
+                    },1000);
+                });
+                socket.on("freezed",function(delay){
+                    freezeLeft = delay;
+                    me.state = "freezed";
+                    setInterval(()=>{
+                        freezeLeft--;
+                        if(freezeLeft < 0) freezeLeft = 0
                     },1000);
                 });
                 socket.on("not enough mana",function(){
@@ -444,7 +455,7 @@
             }
             function updateImage(bg){
                 clear();
-                if(me.state == "active"){
+                if(me.state == "active" || me.state == "freezed"){
                     ctx.drawImage(bg,screenCenter[0]-(screenWidth/2),screenCenter[1]-(screenHeight/2),screenWidth,screenHeight,0,0,screenWidth,screenHeight);
                     if("movement" in me) drawTarget(me.movement.target);
                     drawPlayer(me);
@@ -456,7 +467,13 @@
                     drawMap(false);
                     drawManaIndicator();
                     drawSpellButtons();
-                }else {
+                    if(me.state=="freezed"){
+                        ctx.font = "40px arial";
+                        ctx.fillStyle = "black";
+                        ctx.fillText("Вы заморожены",10,70);
+                        ctx.fillText(`До разморозки ${freezeLeft}`,10,120);
+                    }
+                }else if(me.state=="stunned"){
                     ctx.font = "40px arial";
                     ctx.fillStyle = "black";
                     ctx.fillText("Вы умерли",10,20);

@@ -35,7 +35,9 @@ io.on('connection', function(socket){
         delete game.getUsers()[socket.id];
 	});
 	socket.on("spell",function(msg){
-		user.cast(msg);
+		if(user.state == "active"){
+			user.cast(msg);
+		}
 	});
 });
 
