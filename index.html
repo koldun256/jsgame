@@ -241,14 +241,12 @@
                     if(state==0) socket.emit("started",{spells: testSpellsMessage});
                 });
             });
-            window.addEventListener("load",function(){
-                    
+            window.addEventListener("load",function(){                    
                 let bg = new Image();
                 bg.src = "graphic\\bg.png";
                 ctx.font = "20px serif";
                 ctx.fillText("Нажмите на это что бы начать", 10, 50);
                 socket.on("get target",function(msg){
-                    console.log("movement");
                     if(msg.id == me.id){
                         me.postion = msg.currentPosition;
                         me.movement = new Movement(me,msg.target);
@@ -285,6 +283,7 @@
                     buttons.forEach(function(button,index){
                         button.manaCost = msg.me.spells[index].manaCost;
                         button.image = new Image();
+                        console.log("src: "+msg.me.spells[index].src);
                         button.image.src = msg.me.spells[index].src;
                     });
                     others = msg.others;
@@ -334,11 +333,9 @@
                     }
                 });
                 socket.on("activate",() => {
-                    console.log("ccccc");
                     me.state="active";});
                 socket.on("stunned",function(delay){
                     stunLeft = delay;
-                    console.log("bbbbbb");
                     me.state = "stunned";
                     setInterval(()=>{
                         stunLeft--;
@@ -357,7 +354,6 @@
             },false);
             function checkSpellButton(position){
                 let result = -1;
-                console.log(position);
                 buttons.forEach(function(button,index){
                     let butPosition = button.position;
                     if( position[0] < (butPosition[0]+butPosition[2])&&
@@ -368,7 +364,6 @@
                         result = index;
                     }
                 });
-                console.log(result);
                 return result;
             }
             function clear(){
@@ -380,8 +375,10 @@
                     ctx.strokeStyle = "black";
                     ctx.lineWidth = 5;
                     ctx.clearRect(...butPosition);
+                    ctx.drawImage(button.image,...butPosition);
                     ctx.strokeRect(...butPosition);
                     ctx.fillStyle = "black";
+
                     ctx.font = "20px serif";
                     ctx.fillText(button.manaCost,button.position[0],button.position[1]+butPosition[3]-20);
                 });
@@ -456,12 +453,10 @@
                     }
                     drawBases();
                     drawManaZones(false);
-                    //drawPlayer(other);
                     drawMap(false);
                     drawManaIndicator();
                     drawSpellButtons();
                 }else {
-                    console.log("aaaaaa");
                     ctx.font = "40px arial";
                     ctx.fillStyle = "black";
                     ctx.fillText("Вы умерли",10,20);

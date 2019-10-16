@@ -58,7 +58,7 @@ let actions = [{
             },action.values[0]*1000);
         });
     }],
-    src: "graphic\\spells\\text.png"
+    src: "graphic/spells/stun.png"
 }];
 let teamsInGame = 2;
 let startMana = 1000;

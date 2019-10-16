@@ -16,8 +16,8 @@ app.get('/graphic/bg.png',function(req,res){
 	res.sendFile(__dirname+"/graphic/bg.png");
 });
 
-app.get('/graphic/spells/text.png',function(req,res){
-	res.sendFile(__dirname+"/graphic/spells/text.png");
+app.get('/graphic/spells/stun.png',function(req,res){
+	res.sendFile(__dirname+"/graphic/spells/stun.png");
 });
 io.on('connection', function(socket){
 	let user = game.addUser(socket.id,function(a,b){socket.emit(a,b);},randomColor());
