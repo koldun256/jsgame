@@ -11,10 +11,63 @@ let selectors = {
             manaCost: ()=>{return 3},
             selectors: [],
             validValues: [],
-            onUse: function(){},
+            onCast: function(){},
             checkSelect: function(){
                 let selector = this;
                 return {result: selector.caster.others, isFinished: true};
+            },
+            onSelect:[]
+        },
+        {
+            name: "Пуля",
+            defenition: "Выбирает игрока, поражённого пулей",
+            setting:[{type: 'number',name: 'Скорость'},{type: 'number', name: 'Продолжительность жизни'},{type: 'number',name: 'Размер'}],
+            startValues:[10,5,3],
+            manaCost: ()=>{return 1},
+            selectors: [],
+            toSendingData: function(color){
+                return {color: color,position: this.bullet.position, speed: this.values[0], size: this.values[2], lifetime: this.values[1], target: this.bullet.movement.target};
+            },
+            validValues: [value=>{return typeof value=='number'},value=>{return typeof value=='number'},value=>{return typeof value=='number'}],
+            onCast: function(caster){
+                let bullet = {position: [...caster.position],id: Symbol()};
+                this.bullet = bullet;
+                let newTarget = ('movement' in caster)?
+                                caster.movement.target:
+                                    [   caster.position[0]+caster.prevDelta[0],
+                                        caster.position[1]+caster.prevDelta[1]  ];
+                bullet.movement = new Movement( bullet,
+                                                newTarget,
+                                                this.values[0],
+                                                this.values[1]*10);
+                bullet.collider = new Collider([...bullet.position],[this.values[2],this.values[2]]);
+                caster.game.objects.bullets.push(bullet);
+                let sendingData = this.toSendingData(caster.color);
+                caster.send('bullet',sendingData);
+            },
+            checkSelect: function(caster){
+                let selector = this;
+                if(this.bullet.movement.move()){
+                    return {result: null, isFinished: true};
+                }
+                caster.others.forEach(other=>{
+                    // console.log(selector.bullet.collider);
+                    // console.log(other.collider);
+                    if(selector.bullet.collider.isTouching(other.collider)) {
+                        console.log("qwerty?");
+                        console.log(other);
+                        return {result: [other], isFinished: false};
+                    }
+                    if(other.screenCollider.isTouching(selector.bullet.collider)) {
+                        if(!other.seeing.has(selector.bullet.id)){
+                            other.send('bullet',selector.toSendingData(caster.color));
+                            other.seeing.add(selector.bullet.id);
+                        }
+                    }else {
+                        other.seeing.delete(selector.bullet.id);
+                    }
+                });
+                return {result: null, isFinished:false};
             },
             onSelect:[]
         }
@@ -48,13 +101,11 @@ let actions = [{
             player.state = "stunned";
             if("movement" in player) delete player.movement
             player.send("stunned",action.values[0]);
-            console.log(action.values[0]);
             setTimeout(function(){
                 player.position = player.team.basePosition;
                 player.state = "active";
                 player.send("activate");
                 player.mana = 0;
-                console.log(";");
             },action.values[0]*1000);
         });
     }],
@@ -103,7 +154,7 @@ let baseSize = [100,100];
 let manaZoneWidth = 100;
 let manaZoneDistance = 1500;
 let updateDataDelay = 1000;
-let playerSpeed = 5;
+let playerSpeed = 25;
 let height = 6000;
 let width = 6000;
 let basesPositions = [[width/4,height/2],[width*0.75,height/2]];
@@ -148,6 +199,9 @@ function Game(){
     let playersCount = 0;
     const maxPlayers = teamsInGame * playersInTeam;
     this.teams = [];
+    this.objects = {
+        bullets: []
+    };
     this.loops = 0;
     let updateLoopID;
     let loop = function(){
@@ -182,9 +236,11 @@ function Game(){
         });
 
         this.activeSelectors.forEach(function(selector,index,arr){
-            let result = selector.checkSelect();
-            if(result.result){
-                selector.sendToParent(result.result);
+            let result = selector.selector.checkSelect.apply(selector.selector,[selector.caster]);
+            console.log(result);
+            if(result.result != null){
+                console.log("qwerty!");
+                selector.selector.sendToParent(result.result);
             }
             if(result.isFinished){
                 arr.splice(index,1);
@@ -284,60 +340,69 @@ function Game(){
         return false;
     }
 }
-function Movement(user,point){
+function Movement(user,point,speed,lifetime){
+    let isBullet = typeof(lifetime)=='number';
+    let currentLifetime = lifetime;
     let player = user;
     let moveCount = 0;
+    function calcAllDelta(){
+        return [point[0] - user.position[0], point[1] - user.position[1]];
+    }
     function calcDelta(point){
-        if(point.y == user.position[0]){
-            return [0,user.speed];
-        }else if(point.y == user.position[1]){
-            return [user.speed,0];
-        }else{    
-            let allXDelta = point.x - user.position[0];
-            let allYDelta = point.y - user.position[1];
+        if(point[0] == user.position[0]){
+            return [0,speed];
+        }else if(point[1] == user.position[1]){
+            return [speed,0];
+        }else{
             let dx;
             let dy;
-            let a = allXDelta/allYDelta;
+            let a = this.allDelta[0]/this.allDelta[1];
             if(a < 0){
-                dx = Math.abs(user.speed*a/(a-1)) * (Math.abs(allXDelta)/allXDelta);
-                dy = Math.abs(user.speed/(a-1)) * (Math.abs(allYDelta)/allYDelta);
+                dx = Math.abs(speed*a/(a-1)) * (Math.abs(this.allDelta[0])/this.allDelta[0]);
+                dy = Math.abs(speed/(a-1)) * (Math.abs(this.allDelta[1])/this.allDelta[1]);
             }else {
-                dx = Math.abs(user.speed*a/(a+1)) * (Math.abs(allXDelta)/allXDelta);
-                dy = Math.abs(user.speed/(a+1)) * (Math.abs(allYDelta)/allYDelta);
+                dx = Math.abs(speed*a/(a+1)) * (Math.abs(this.allDelta[0])/this.allDelta[0]);
+                dy = Math.abs(speed/(a+1)) * (Math.abs(this.allDelta[1])/this.allDelta[1]);
             }
             return [dx,dy];
         }
     }
     function calcDirection(){
-        let a = player.position[0] < point.x; //true - right, false - left
-        let b = player.position[1] < point.y; //true - down , false - up
-        return [a,b]; 
+        let a = player.position[0] < point[0]; //true - right, false - left
+        let b = player.position[1] < point[1]; //true - down , false - up
+        return [a,b];
     }
     function isFinished(){
         let result;
-        if(direction[0]){
-            if(direction[1]){
-                result = player.position[0] > point.x && player.position[1] > point.y;
-            }else{
-                result = player.position[0] > point.x && player.position[1] < point.y;
+        if(isBullet){
+            currentLifetime--;
+            return currentLifetime < 0;
+        }else{
+            if(direction[0]){
+                if(direction[1]){
+                    result = player.position[0] > point[0] && player.position[1] > point[1];
+                }else{
+                    result = player.position[0] > point[0] && player.position[1] < point[1];
+                }
+            }else {
+                if(direction[1]){
+                    result = player.position[0] < point[0] && player.position[1] > point[1];
+                }else{
+                    result = player.position[0] < point[0] && player.position[1] < point[1];
+                }
             }
-        }else {
-            if(direction[1]){
-                result = player.position[0] < point.x && player.position[1] > point.y;
-            }else{
-                result = player.position[0] < point.x && player.position[1] < point.y;
-            }
+            return result;
         }
-        return result;
     }
     let direction = calcDirection();
     this.target = point;
-    this.d = calcDelta(this.target);
+    this.allDelta = calcAllDelta();
+    this.d = calcDelta.apply(this,[this.target]);
     this.speed = user.speed;
-    
+
     this.setTarget = function(newTarget){
         this.target = newTarget;
-        this.d = calcDelta(newTarget);
+        this.d = calcDelta(newTarget).apply(this,[]);
     }
     this.toSendingData = function(){
         return {id: player.id, target: point, currentPosition: player.position};
@@ -345,10 +410,20 @@ function Movement(user,point){
     this.move = function(){
         player.position[0]+=this.d[0];
         player.position[1]+=this.d[1];
-        player.screenCollider.position = player.collider.position = player.position;
+        if(isBullet){
+            player.collider.position = player.position;
+        }else{
+            player.screenCollider.position = player.collider.position = player.position;
+            console.log(player.collider.position);
+        }
         moveCount++;
-        if(isFinished()){
-            delete player.movement;
+        if(isBullet){
+            return isFinished();
+        }else{
+            if(isFinished()){
+                player.prevDelta = this.allDelta;
+                delete player.movement;
+            }
         }
     };
 }
@@ -356,7 +431,7 @@ function Spell(player){
     this.action = {};
     this.player = player;
     function addAction(action){
-        let n = Object.assign({selectors:[]},action);
+        let n = Object.assign({selectors:[],values: []},action);
         this.action = n;
         this.action.values = n.startValues;
     };
@@ -370,7 +445,7 @@ function Spell(player){
     };
     this.manaCost = 0;
     this.cast = function(){
-        return this.action.onCast().activateSelectors;
+        return this.action.onCast.apply(this.action,[]).activateSelectors;
     }
     this.toSendingData = function(){
         let action = this.action;
@@ -395,11 +470,11 @@ function Spell(player){
             let trueSelector;
             selectors[selector.type].forEach(a=>{
                 if(a.name == selector.name){
-                    trueSelector = Object.assign({caster: player},a);
+                    trueSelector = Object.assign({caster: player, selectors:[],values:[]},a);
                 }
             });
             selector.setting.forEach((setting,index)=>{
-                if(trueSelector.validValues(setting,index)){
+                if(trueSelector.validValues[index](setting)){
                     trueSelector.values[index] = setting;
                 }
             });
@@ -450,6 +525,7 @@ function User(send,id,color,position){
     this.id = id;
     this.mana = startMana;
     this.teamMates = [];
+    this.prevDelta = [1,1];
     this.color = color;
     this.seeing = new Set();
     this.position = position;
@@ -457,7 +533,7 @@ function User(send,id,color,position){
     this.send = send;
     this.speed = playerSpeed;
     this.screenCollider = new Collider(this.position, [playerScreenX,playerScreenY]);
-    this.collider = new Collider(this.position, [10,10]);
+    this.collider = new Collider(this.position, [50,50]);
     this.toSendingData = function(){
         return {
             position:   this.position,
@@ -465,15 +541,24 @@ function User(send,id,color,position){
     };
     this.cast = function(index){
         let game = this.game;
+        let player = this;
+        // console.log(this.spells[index]);
         if(this.mana>=this.spells[index].manaCost){
             this.mana -= this.spells[index].manaCost;
-            this.spells[index].cast().forEach(spell=>game.activeSelectors.push(spell));
+            this.spells[index].cast().forEach(selector=>{
+                selector.onCast.apply(selector,[player]);
+                game.activeSelectors.push({ selector: selector,
+                                            caster: player  });
+            });
         }else{
             this.send("not enough mana");
         }
     };
     this.createMovement = function(point){
-        this.movement = new Movement(this,point);
+        if('movement' in this){
+            this.prevDelta = [...this.movement.allDelta];
+        }
+        this.movement = new Movement(this,point,this.speed);
         this.send("get target",this.movement.toSendingData());
         let id = this.id;
         this.others.forEach(other=>{

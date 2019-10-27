@@ -13,7 +13,7 @@
                 {
                     name: "Заморозка",
                     setting: [4],
-                    selectors: [{name: "Остальные",setting:[],selectors:[],type: "player"}]
+                    selectors: [{name: "Пуля",setting:[10,5,10],selectors:[],type: "player"}]
                 },
                 {
                     name: "Стан",
@@ -65,8 +65,8 @@
                 drawManaZones(true);
             }
             function drawTarget(globalPosition){
-                let x = globalPosition.x-screenCenter[0] + (screenWidth/2);
-                let y = globalPosition.y-screenCenter[1] + (screenHeight/2);
+                let x = globalPosition[0]-screenCenter[0] + (screenWidth/2);
+                let y = globalPosition[1]-screenCenter[1] + (screenHeight/2);
                 ctx.beginPath();
                 ctx.arc(x, y, 15, 0, 2 * Math.PI, false);
                 ctx.lineWidth = 7;
@@ -104,17 +104,19 @@
             let me = {};
             let positionOnScreen = [0,0];
             let isMouseDown = false;
-            function Movement(user,point){
+            let bullets = [];
+            function Movement(user,point,speed,lifetime){
                 let player = user;
-                
+                let isBullet = typeof(lifetime)=='number';
+                let currentLifetime = lifetime;
                 function calcDelta(point){
-                    if(point.x == user.position[0]){
+                    if(point[0] == user.position[0]){
                         return [0,speed];
-                    }else if(point.y == user.position[1]){
+                    }else if(point[1] == user.position[1]){
                         return [speed,0];
                     }else{
-                        let allXDelta = point.x - user.position[0];
-                        let allYDelta = point.y - user.position[1];
+                        let allXDelta = point[0] - user.position[0];
+                        let allYDelta = point[1] - user.position[1];
                         let dx;
                         let dy;
                         let a = allXDelta/allYDelta;
@@ -129,25 +131,30 @@
                     }
                 }
                 function calcDirection(){
-                    let a = !(player.position[0] > point.x); //true - right, false - left
-                    let b = !(player.position[1] > point.y); //true - down , false - up
+                    let a = !(player.position[0] > point[0]); //true - right, false - left
+                    let b = !(player.position[1] > point[1]); //true - down , false - up
                     return [a,b]; 
                 }
                 function isFinished(){
-                    if(direction[0]){
-                        if(direction[1]){
-                            return player.position[0] > point.x && player.position[1] > point.y;
-                        }else{
-                            return player.position[0] > point.x && player.position[1] < point.y;
+                    if(isBullet){
+                        currentLifetime--;
+                        return currentLifetime<0;
+                    }else{
+                        if(direction[0]){
+                            if(direction[1]){
+                                return player.position[0] > point[0] && player.position[1] > point[1];
+                            }else{
+                                return player.position[0] > point[0] && player.position[1] < point[1];
+                            }
+                        }else {
+                            if(direction[1]){
+                                return player.position[0] < point[0] && player.position[1] > point[1];
+                            }else{
+                                return player.position[0] < point[0] && player.position[1] < point[1];
+                            }
                         }
-                    }else {
-                        if(direction[1]){
-                            return player.position[0] < point.x && player.position[1] > point.y;
-                        }else{
-                            return player.position[0] < point.x && player.position[1] < point.y;
-                        }
+                        return false;
                     }
-                    return false;
                 }
                 let direction = calcDirection();
                 this.target = point;
@@ -161,8 +168,12 @@
                 this.move = function(){
                     player.position[0]+=this.d[0];
                     player.position[1]+=this.d[1];
-                    if(isFinished()){
-                        delete player.movement;
+                    if(isBullet){
+                        return isFinished();
+                    }else{
+                        if(isFinished()){
+                            delete player.movement;
+                        }
                     }
                 };
             }
@@ -187,7 +198,7 @@
                 return [x+screenCenter[0]-screenWidth/2,y+screenCenter[1]-screenHeight/2];
             }
             let addTarget = function(x,y){
-                socket.emit("setTarget",{x:x,y:y});
+                socket.emit("setTarget",[x,y]);
             };
             addTarget = debounce(addTarget,100);
             socket.on("spelled",function(msg){
@@ -201,7 +212,7 @@
                 me.position = msg.me.position;
                 me.mana = msg.me.mana;
                 if("movement" in msg.me){
-                    me.movement = new Movement(me,msg.me.movement.target);
+                    me.movement = new Movement(me,msg.me.movement.target,speed);
                 }else{
                     delete me.movement;
                 }
@@ -209,7 +220,7 @@
                     if(key in msg){
                         others[key].position = msg[key].position;
                         if("movement" in msg[key]){
-                            others[key].movement = new Movement(others[key],msg[key].movement.target);
+                            others[key].movement = new Movement(others[key],msg[key].movement.target,speed);
                         }else {
                             delete others[key].movement;
                         }
@@ -250,12 +261,12 @@
                 socket.on("get target",function(msg){
                     if(msg.id == me.id){
                         me.postion = msg.currentPosition;
-                        me.movement = new Movement(me,msg.target);
+                        me.movement = new Movement(me,msg.target,speed);
                         return;
                     }
                     if(msg.id in others){
                         others[msg.id].position = msg.currentPosition;
-                        others[msg.id].movement = new Movement(others[msg.id],msg.target);
+                        others[msg.id].movement = new Movement(others[msg.id],msg.target,speed);
                     }
                 });
                 $("#canvas").mousedown(function(a){
@@ -276,6 +287,14 @@
                 $("#canvas").mousemove(function(a){
                     if(state!=2) return;
                     if(isMouseDown) addTarget(...localToGlobalCoords(a.clientX,a.clientY));
+                });
+                socket.on('bullet',function(msg){
+                    console.log("|||||||||||||||||||||||||||||||||||||||||||||||");
+                    console.log(msg);
+                    let bullet = {size: msg.size, position: msg.position, color: msg.color};
+                    bullet.movement = new Movement(bullet,msg.target,msg.speed,msg.lifetime*10);
+
+                    bullets.push(bullet);
                 });
                 socket.on("wait",function(){
                     clear();
@@ -308,6 +327,7 @@
                                 me.isInManaZone = true;
                             }
                         });
+                        bullets.forEach((bullet,index,array)=>{if(bullet.movement.move()) array.splice(index,1)});
                         if(me.isInManaZone){
                             me.mana += manaZonesSetting.regen;
                             if(me.mana > maxMana){
@@ -379,6 +399,18 @@
             }
             function clear(){
                 ctx.clearRect(0, 0, document.getElementById("canvas").width, document.getElementById("canvas").height);
+            }
+            function drawBullets(){
+                bullets.forEach(function(bullet){
+                    console.log('drawing bullet');
+                    let bulletDrawing = [bullet.position[0]-bullet.size/2-screenCenter[0]+screenWidth/2,
+                                bullet.position[1]-bullet.size/2-screenCenter[1]+screenHeight/2,
+                                bullet.size,
+                                bullet.size];
+                    console.log(bulletDrawing);
+                    ctx.fillStyle = bullet.color;
+                    ctx.fillRect(...bulletDrawing);
+                });
             }
             function drawSpellButtons(){
                 buttons.forEach(function(button){
@@ -463,6 +495,7 @@
                         drawPlayer(others[key]);
                     }
                     drawBases();
+                    drawBullets();
                     drawManaZones(false);
                     drawMap(false);
                     drawManaIndicator();
