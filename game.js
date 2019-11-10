@@ -1,22 +1,20 @@
-const frameDelay = 100;
-const maxMana = 2000;
-let playersInTeam = 1;
-let selectors = {
+// В этом файле описан геймплей
+let selectors = { //Здесь описаны селекторы и их функционал
     player: [
         {
-            name: "Остальные",
-            defenition: "Выбирает всех игроков игры кроме тебя",
-            setting:[],
-            startValues:[],
-            manaCost: ()=>{return 3},
-            selectors: [],
-            validValues: [],
-            onCast: function(){},
-            checkSelect: function(){
+            name: "Остальные", // Название в меню создания заклинания
+            defenition: "Выбирает всех игроков игры кроме тебя", // Описание в меню создания заклинания
+            setting:[], // Значения, которые должен ввести поьзователь при создании
+            startValues:[], // Значения по умолчанию
+            manaCost: ()=>{return 3}, // Функция подсчёта стоимости маны селектора в зависимости от введённых пользователем значений и селекторов
+            selectors: [],// Массив селекторов, нужных этому селектору
+            validValues: [], // Массив функций, проверяющих, является ли введённое пользователем значение корректным
+            onCast: function(){}, // Функция вызывающаяся при касте
+            checkSelect: function(){ // Вызывается каждый кадр и проверяет, подверглись ли какие-то игроки селекторы в этот кадр
                 let selector = this;
                 return {result: selector.caster.others, isFinished: true};
             },
-            onSelect:[]
+            onSelect:[] // Массив функций, которые вызываются, когда дочерний селектор активирован
         },
         {
             name: "Пуля",
@@ -51,11 +49,7 @@ let selectors = {
                     return {result: null, isFinished: true};
                 }
                 caster.others.forEach(other=>{
-                    // console.log(selector.bullet.collider);
-                    // console.log(other.collider);
                     if(selector.bullet.collider.isTouching(other.collider)) {
-                        console.log("qwerty?");
-                        console.log(other);
                         return {result: [other], isFinished: false};
                     }
                     if(other.screenCollider.isTouching(selector.bullet.collider)) {
@@ -73,13 +67,14 @@ let selectors = {
         }
     ]
 };
-let actions = [{
+
+let actions = [{ // Тут описываются действия, шаблон почти тот же, что и селекторов
     name: "Стан",
     definishion: "Игрок на хъ секунд тепряет возможность что-либо делать, после чего телепортируется на базу",
-    actionManaCost: function(){
+    actionManaCost: function(){ // Стоимость действия
         return 200+this.values[0]*40;
     },
-    spellManaCost: function(AMC,SMCs){
+    spellManaCost: function(AMC,SMCs){ //Стоимость всего заклинания, AMC - AcitonManaCost - стоимость действия, SMCs = SelectorManaCostS - стоимость дочерних селекторов
         return AMC*SMCs[0];
     },
     setting: [{type: "number",name: "Длительность стана"}],
@@ -147,35 +142,44 @@ let actions = [{
     }],
     src: "spells/freeze.png"
 }];
-let teamsInGame = 2;
-let startMana = 1000;
-let manaRegen = 10;
-let baseSize = [100,100];
-let manaZoneWidth = 100;
-let manaZoneDistance = 1500;
-let updateDataDelay = 1000;
-let playerSpeed = 25;
-let height = 6000;
-let width = 6000;
-let basesPositions = [[width/4,height/2],[width*0.75,height/2]];
-let users = {};
-let GAMES = {};
-let waitingGame = new Game();
-let playerScreenX = 900;
-let playerScreenY = 900;
+// Игровые константы
+const frameDelay = 100; // FPS
+const maxMana = 2000; // Максимальный запас маны
+const playersInTeam = 1; // Количество игроков в команде
+const teamsInGame = 2; // Количество команд в игре
+const startMana = 1000; // Начальное количество маны
+const manaRegen = 10; // Регенерация маны в зонах регенерации маны
+const baseSize = [100,100]; // Размер сторон базы
+const manaZoneWidth = 100; // Ширина мана-круга
+const manaZoneDistance = 1500; // Расстояние от базы до мана-круга
+const updateDataDelay = 1000; // Длительность между синхронизациями
+const playerSpeed = 10; // Скорость игрока
+const height = 6000; // Высота поля
+const width = 6000; // Ширина поля
+const basesPositions = [[width/4,height/2],[width*0.75,height/2]]; // Положения баз
+const playerScreenX = 900; // Ширина экрана
+const playerScreenY = 900; // Высота экрана
 
-function isPlayerInManaZone(playerPos,basePos){
-    function calcDistance(pointA,pointB){
+let users = {}; // Тут хранятся объекты игроков
+let GAMES = {}; // Тут хранятся объекты партий
+let waitingGame = new Game();
+
+function isPlayerInManaZone(playerPos,basePos){ // Алгоритм определения, находится ли игрок в мана-круге
+    // Основной принцип: вычисляется расстояние от игрока до базы, и проверяется, примерно ранво ли это расстоянию от базы до кольца
+    function calcDistance(pointA,pointB){ // Алгоритм вычисления расстояния от игрока до базы
         return Math.abs(Math.sqrt((pointA[0]-pointB[0])**2 + (pointA[1]-pointB[1])**2));
     }
     let distance = calcDistance(playerPos,basePos);
     let result = (distance > (manaZoneDistance/2 - manaZoneWidth/2)) && (distance < (manaZoneDistance/2 + manaZoneWidth/2));
     return result;
 }
-function Collider(center,size){
+
+function Collider(center,size){ // Класс прямоугольной области сталкивания
+    // Установка параметров коллайдера исходя из аргументов
     this.sizeX = size[0]/2;
     this.sizeY = size[1]/2;
     this.position = center;
+    // Алгоритм определения,касается ли этот коллайдер другого
     this.isTouching = function(other){
         let a=false,b=false,c=false,d = false;
         if(other.position[0] > this.position[0]){
@@ -190,64 +194,68 @@ function Collider(center,size){
         }
         let result = (a||b)&&(c||d);
         return result;
-    };
+    }
 }
+// Класс игровой партии
 function Game(){
+    // Установка позже заполняющихся параметров, лень объяснять каждый из них
     this.players = [];
     this.activeSelectors = [];
-    let selectorsLoops = [];
-    let playersCount = 0;
-    const maxPlayers = teamsInGame * playersInTeam;
     this.teams = [];
     this.objects = {
         bullets: []
     };
     this.loops = 0;
+    let selectorsLoops = [];
+    let playersCount = 0;
+    const maxPlayers = teamsInGame * playersInTeam;
     let updateLoopID;
-    let loop = function(){
+
+    let loop = function(){ // выполняется каждый кадр игры
         this.loops++;
         let game = this;
-        this.players.forEach(function(player){
-            if("movement" in player){
-                player.movement.move();
-                player.isOnBase = player.collider.isTouching(player.team.baseCollider);
-                player.isInManaZone = isPlayerInManaZone(player.position,player.team.basePosition);
+        this.players.forEach(function(player){ // До конца функции - код, выполняющийся для каждого игрока, текущий - переменная player
+
+            if("movement" in player/*Если текущий игрок находится в движении*/){
+                player.movement.move(); // Игрок двигается на один шаг
+                player.isOnBase = player.collider.isTouching(player.team.baseCollider); // Обновляется нахождение игрока на базе
+                player.isInManaZone = isPlayerInManaZone(player.position,player.team.basePosition); // Обновляется нахождение игрока в зоне маны
             }
-            if(player.isInManaZone){
-                player.mana += manaRegen;
-                if(player.mana > maxMana){
-                    player.mana = maxMana;
+
+            if(player.isInManaZone){ // Если текущий игрок в зоне маны
+                player.mana += manaRegen; // Ему востанавливается немного маны
+                if(player.mana > maxMana){ // Если запас маны игрока переполнен,
+                    player.mana = maxMana; // Ему возвращается значение максимального запаса маны
                 }
             }
-            player.others.forEach(function(other){
-                if(player.screenCollider.isTouching(other.collider)){
-                    if(!player.seeing.has(other.id)){
-                        player.seeing.add(other.id);
-                        if("movement" in other){
-                            player.send("get target",other.movement.toSendingData());
-                        }else {
-                            player.send("set position",{id: other.id, position: other.position});
+
+            player.others.forEach(function(other){ // До конца функции - код, выполняющийся для каждого из других игроков игрока player, текущий - переменная other
+                if(player.screenCollider.isTouching(other.collider)){ // Если other видим для player
+                    if(!player.seeing.has(other.id)){ // Если player до этого не видел other (значит этот игрок только сейчас заметил other)
+                        player.seeing.add(other.id); // Во множество видимых объектов для этого игрока добавляется other
+                        if("movement" in other){ // Если other сейчас в движении
+                            player.send("get target",other.movement.toSendingData()); // тогда player'у отправляются данные об other включая данных движения
+                        }else { // иначе
+                            player.send("set position",{id: other.id, position: other.position}); // player'у отправляются только данные об положении other
                         }
                     }
-                }else{
-                    player.seeing.delete(other.id);
+                }else{ // Если other невидим для player
+                    player.seeing.delete(other.id); // Тогда удаляем other'а из списка видимого для player'a
                 }
             });
         });
 
-        this.activeSelectors.forEach(function(selector,index,arr){
-            let result = selector.selector.checkSelect.apply(selector.selector,[selector.caster]);
-            console.log(result);
-            if(result.result != null){
-                console.log("qwerty!");
-                selector.selector.sendToParent(result.result);
+        this.activeSelectors.forEach(function(selector,index,arr){ // Для каждого активного selector'а в игре
+            let result = selector.selector.checkSelect.apply(selector.selector,[selector.caster]); // Вызывается checkselect для этого selector'a, а результат записывается в result
+            if(result.result != null){ // Если селеткор что-то выбрал, то
+                selector.selector.sendToParent(result.result); // То мы отправляем данные об этом "родителю" селектора
             }
-            if(result.isFinished){
-                arr.splice(index,1);
+            if(result.isFinished){ // Если селектор закончен, то
+                arr.splice(index,1); // он удаляется из списка активных селекторов
             }
         });
     };
-    function updateLoop(){
+    function updateLoop(){ // Функция синхронизации
         this.send("update data",function(player){
             let message = {me: {position: player.position, mana: player.mana}};
             if("movement" in player){
@@ -414,7 +422,6 @@ function Movement(user,point,speed,lifetime){
             player.collider.position = player.position;
         }else{
             player.screenCollider.position = player.collider.position = player.position;
-            console.log(player.collider.position);
         }
         moveCount++;
         if(isBullet){
@@ -542,7 +549,6 @@ function User(send,id,color,position){
     this.cast = function(index){
         let game = this.game;
         let player = this;
-        // console.log(this.spells[index]);
         if(this.mana>=this.spells[index].manaCost){
             this.mana -= this.spells[index].manaCost;
             this.spells[index].cast().forEach(selector=>{
