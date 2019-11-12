@@ -256,36 +256,36 @@ function Game(){
         });
     };
     function updateLoop(){ // Функция синхронизации
-        this.send("update data",function(player){
-            let message = {me: {position: player.position, mana: player.mana}};
-            if("movement" in player){
-                message.me.movement = player.movement.toSendingData();
+        this.send("update data",function(player){ // Каждому игроку в игре посылается сообщение "update data", содержание которого генерируется функцией ниже в зависимости от игрока, текущий - аргумент player
+            let message = {me: {position: player.position, mana: player.mana}}; // Генерация данных о себе
+            if("movement" in player){ // Если игрок сейчас двигается, то
+                message.me.movement = player.movement.toSendingData(); // В сообщение добавляются данные о движении
             }
-            player.others.forEach(function(otherPlayer){
-                if(player.seeing.has(otherPlayer.id)){
-                    message[otherPlayer.id] = {position: otherPlayer.position};
+            player.others.forEach(function(otherPlayer){ // Для каждого другого игрока относительно player
+                if(player.seeing.has(otherPlayer.id)){ // Если player видит otherPlayer, то
+                    message[otherPlayer.id] = {position: otherPlayer.position}; // В объект сообщения добавляются данные о otherPlayer
                     if("movement" in otherPlayer){
                         message[otherPlayer.id].movement = otherPlayer.movement;
                     }
                 }
             });
-            return message;
+            return message; // Возвращается сгенерированное выше сообщение
         });
     }
     let loopTimer;
     let id = Symbol();
     this.colliders = [];
     GAMES[id] = this;
-    this.send = function(msg,func){
+    this.send = function(msg,func){ // Функция оповещения всех игроков партии, принцып её работы не важен
         this.teams.forEach(function(team){
             team.send(msg,func);
         });
     }
-    this.start = function(){
-        this.players.forEach(player=>player.position = [...player.team.basePosition]);
-        this.send("start",function(player){
-            let spells = [];
-            player.spells.forEach(spell=>spells.push(spell.toSendingData()));
+    this.start = function(){ // Функция запускается, когда партия начинается. А объект партии создаётся, когда есть хоть 1 игрок
+        this.players.forEach(player=>player.position=[...player.team.basePosition]); // Для каждого игрока заполняется поле положения базы
+        this.send("start",function(player){ // Каждому игроку игры отправляется сообщение о старте, текущий - player
+            let spells = []; // Создаётся массив заклинаний, созданных игроком в меню
+            player.spells.forEach(spell=>spells.push(spell.toSendingData())); // ...и заполняется
             let message = {
                 me:{
                     position: player.position,
@@ -300,39 +300,33 @@ function Game(){
                     width: manaZoneWidth,
                     distance: manaZoneDistance,
                     regen: manaRegen},
-                maxMana: maxMana};
+                maxMana: maxMana}; //Генерируется большой объект информации о партии
             player.others.forEach(function(other){
                 message.others[other.id] = {color: other.color};
                 if(player.screenCollider.isTouching(other.collider)){
                     message.others[other.id].position = other.position;
                 }
-            });
+            });// Заполняются данные о других игроках в игре, такие как id и цвет
             return message;
         });
         let game = this;
-        this.players.forEach(player => player.game=game);
-        updateLoopID = setInterval(function(){
-            updateLoop.apply(game,[]);
-        },updateDataDelay);
-        loopTimer = setInterval(function(){
-            loop.apply(game,[]);
-        },frameDelay);
+        this.players.forEach(player=>player.game=game); // Для каждого игрока заполняется поле game
+        updateLoopID = setInterval(()=>updateLoop.apply(game,[]),updateDataDelay); // Запускаются игровой и синхронизационный циклы
+        loopTimer = setInterval(()=>loop.apply(game,[]),frameDelay);
     };
-    this.end = function(winner){
+    this.end = function(winner){ // Запусается, когда игра кончается (пока игра не кончается, потому недоделан)
         winner.send("win");
-        winner.others.forEach(other=>other.send("loose",()=>{return 0}));
+        winner.others.forEach(other=>other.send("loose",()=>""));
         clearInterval(loopTimer);
         clearInterval(updateLoopID);
         delete GAMES[id];
     };
-    this.addPlayer = function(player){
-        playersCount++;
-        player.others = [...this.players];
-        this.players.forEach(function(curPlayer){
-            curPlayer.others.push(player);
-        });
-        this.players.push(player);
-        if(playersCount%playersInTeam==0){
+    this.addPlayer = function(player){ // Запускается, когда в ждущую игру присоеденяеся человек
+        playersCount++; // Увиличивается счётчик игроков
+        player.others = [...this.players]; // Эта и следуйщая строчка - заполнение others, которое так часто использвалось выше
+        this.players.forEach((curPlayer)=>curPlayer.others.push(player));
+        this.players.push(player); // Этот игрок добавляется к списку игроков, участвующих в игре
+        if(playersCount%playersInTeam==0){ // Алгоритм для создания, если это нужно, команды
             let newTeam = new Team(basesPositions[this.teams.length]);
             newTeam.others = [...this.teams];
             this.teams.forEach(function(oldTeam){
@@ -340,8 +334,8 @@ function Game(){
             });
             this.teams.push(newTeam);
         }
-        this.teams[this.teams.length - 1].addPlayer(player);
-        if(playersCount==maxPlayers){
+        this.teams[this.teams.length-1].addPlayer(player); // Игрок добавляется к команде
+        if(playersCount==maxPlayers){ // Если игроков достаточно, начинается игра
             this.start();
             return true;
         }
