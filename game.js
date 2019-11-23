@@ -6,7 +6,7 @@ let selectors = { //Здесь описаны селекторы и их фун�
             defenition: "Выбирает всех игроков игры кроме тебя", // Описание в меню создания заклинания
             setting:[], // Значения, которые должен ввести поьзователь при создании
             startValues:[], // Значения по умолчанию
-            manaCost: ()=>{return 3}, // Функция подсчёта стоимости маны селектора в зависимости от введённых пользователем значений и селекторов
+            manaCost: ()=>3, // Функция подсчёта стоимости маны селектора в зависимости от введённых пользователем значений и селекторов
             selectors: [],// Массив селекторов, нужных этому селектору
             validValues: [], // Массив функций, проверяющих, является ли введённое пользователем значение корректным
             onCast: function(){}, // Функция вызывающаяся при касте
@@ -21,12 +21,12 @@ let selectors = { //Здесь описаны селекторы и их фун�
             defenition: "Выбирает игрока, поражённого пулей",
             setting:[{type: 'number',name: 'Скорость'},{type: 'number', name: 'Продолжительность жизни'},{type: 'number',name: 'Размер'}],
             startValues:[10,5,3],
-            manaCost: ()=>{return 1},
+            manaCost: ()=>1,
             selectors: [],
             toSendingData: function(color){
                 return {color: color,position: this.bullet.position, speed: this.values[0], size: this.values[2], lifetime: this.values[1], target: this.bullet.movement.target};
             },
-            validValues: [value=>{return typeof value=='number'},value=>{return typeof value=='number'},value=>{return typeof value=='number'}],
+            validValues: [value=>typeof value=='number',value=>typeof value=='number',value=>typeof value=='number'],
             onCast: function(caster){
                 let bullet = {position: [...caster.position],id: Symbol()};
                 this.bullet = bullet;
@@ -40,17 +40,18 @@ let selectors = { //Здесь описаны селекторы и их фун�
                                                 this.values[1]*10);
                 bullet.collider = new Collider([...bullet.position],[this.values[2],this.values[2]]);
                 caster.game.objects.bullets.push(bullet);
-                let sendingData = this.toSendingData(caster.color);
-                caster.send('bullet',sendingData);
+                caster.send('bullet',this.toSendingData(caster.color));
             },
             checkSelect: function(caster){
                 let selector = this;
+                let result = {result: null, isFinished: false};
                 if(this.bullet.movement.move()){
                     return {result: null, isFinished: true};
                 }
                 caster.others.forEach(other=>{
                     if(selector.bullet.collider.isTouching(other.collider)) {
-                        return {result: [other], isFinished: false};
+                        result = {result: [other], isFinished: false};
+                        // console.log("aqws");
                     }
                     if(other.screenCollider.isTouching(selector.bullet.collider)) {
                         if(!other.seeing.has(selector.bullet.id)){
@@ -61,7 +62,7 @@ let selectors = { //Здесь описаны селекторы и их фун�
                         other.seeing.delete(selector.bullet.id);
                     }
                 });
-                return {result: null, isFinished:false};
+                return result;
             },
             onSelect:[]
         }
@@ -104,7 +105,7 @@ let actions = [{ // Тут описываются действия, шаблон
             },action.values[0]*1000);
         });
     }],
-    src: "spells/stun.png"
+    src: 'stun.png'
 },
 {
     name: "Заморозка",
@@ -130,6 +131,8 @@ let actions = [{ // Тут описываются действия, шаблон
     },
     onSelect: [function(selectorResult){
         let action = this;
+        // console.log(action.values[0]);
+        //console.log(this);
         selectorResult.forEach(function(player){
             player.state = "freezed";
             if("movement" in player) delete player.movement
@@ -140,7 +143,7 @@ let actions = [{ // Тут описываются действия, шаблон
             },action.values[0]*1000);
         });
     }],
-    src: "spells/freeze.png"
+    src: 'freeze.png'
 }];
 // Игровые константы
 const frameDelay = 100; // FPS
@@ -215,7 +218,7 @@ function Game(){
         this.loops++;
         let game = this;
         this.players.forEach(function(player){ // До конца функции - код, выполняющийся для каждого игрока, текущий - переменная player
-
+            // console.log(player.spells[0].action);
             if("movement" in player/*Если текущий игрок находится в движении*/){
                 player.movement.move(); // Игрок двигается на один шаг
                 player.isOnBase = player.collider.isTouching(player.team.baseCollider); // Обновляется нахождение игрока на базе
@@ -281,7 +284,8 @@ function Game(){
             team.send(msg,func);
         });
     }
-    this.start = function(){ // Функция запускается, когда партия начинается. А объект партии создаётся, когда есть хоть 1 игрок
+    this.start = function(){ // Функция запускается, когда партия н ачинается. А объект партии создаётся, когда есть хоть 1 игрок
+
         this.players.forEach(player=>player.position=[...player.team.basePosition]); // Для каждого игрока заполняется поле положения базы
         this.send("start",function(player){ // Каждому игроку игры отправляется сообщение о старте, текущий - player
             let spells = []; // Создаётся массив заклинаний, созданных игроком в меню
@@ -313,6 +317,7 @@ function Game(){
         this.players.forEach(player=>player.game=game); // Для каждого игрока заполняется поле game
         updateLoopID = setInterval(()=>updateLoop.apply(game,[]),updateDataDelay); // Запускаются игровой и синхронизационный циклы
         loopTimer = setInterval(()=>loop.apply(game,[]),frameDelay);
+
     };
     this.end = function(winner){ // Запусается, когда игра кончается (пока игра не кончается, потому недоделан)
         winner.send("win");
@@ -435,15 +440,13 @@ function Spell(player){
         let n = Object.assign({selectors:[],values: []},action);
         this.action = n;
         this.action.values = n.startValues;
-    };
+    }
     function addSelector(destSelector,selector){
         destSelector = Object.assign({},selector);
-    };
+    }
     function changeActionValue(newValue,id){
-        if(this.action.validValues[id](newValue)){
-            this.action.values[id] = newValue;
-        }
-    };
+        if(this.action.validValues[id](newValue)) this.action.values[id] = newValue
+    }
     this.manaCost = 0;
     this.cast = function(){
         return this.action.onCast.apply(this.action,[]).activateSelectors;
@@ -575,6 +578,7 @@ module.exports = {
             let newSpell = new Spell(player);
             newSpell.fromSendingData(spell);
             player.spells.push(newSpell);
+            console.log(newSpell);
         });
         if(waitingGame.addPlayer(player)){
             waitingGame = new Game();
