@@ -11,7 +11,6 @@ const game = require('./game');
 const PORT = process.env.PORT || 5000;
 
 app.use(express.static('public'));
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 
 app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'));
 io.on('connection', socket => {
@@ -23,16 +22,16 @@ io.on('connection', socket => {
         speed: game.speed,
         fieldHeight: game.fieldHeight,
         fieldWidth: game.fieldWidth,
-        baseSize: game.baseSize});
+        baseSize: game.baseSize });
 
     socket.on('setTarget', target=>{
 		if(user.state == 'active') user.createMovement(target)
 	});
 
-	socket.on('started',msg=>game.addUserToGame(user,msg.spells));
+	socket.on('started',msg=>game.addUserToGame(user,msg.spells,msg.type,msg.data));
 
-    socket.on('disconnect',function(){
-        console.log('deleted');
+    socket.on('disconnect',()=>{
+        console.log('deleted')		;
         delete game.getUsers()[socket.id];
 	});
 

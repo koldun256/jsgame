@@ -51,7 +51,6 @@ let selectors = { //Здесь описаны селекторы и их фун�
                 caster.others.forEach(other=>{
                     if(selector.bullet.collider.isTouching(other.collider)) {
                         result = {result: [other], isFinished: false};
-                        // console.log("aqws");
                     }
                     if(other.screenCollider.isTouching(selector.bullet.collider)) {
                         if(!other.seeing.has(selector.bullet.id)){
@@ -131,8 +130,6 @@ let actions = [{ // Тут описываются действия, шаблон
     },
     onSelect: [function(selectorResult){
         let action = this;
-        // console.log(action.values[0]);
-        //console.log(this);
         selectorResult.forEach(function(player){
             player.state = "freezed";
             if("movement" in player) delete player.movement
@@ -146,26 +143,37 @@ let actions = [{ // Тут описываются действия, шаблон
     src: 'freeze.png'
 }];
 // Игровые константы
+const modesInfo = {
+    "DM": {
+        "points": {
+            "stun": 5
+        },
+        "needPointsToWin": 20,
+         "width": 6000,
+         "height": 6000,
+         "player speed": 10,
+         "players in team": 1,
+         "teams in game": 2,
+         "base size": [100,100],
+         "bases positions": [[1500,3000],[4500,3000]]
+    }
+
+
+};
 const frameDelay = 100; // FPS
 const maxMana = 2000; // Максимальный запас маны
-const playersInTeam = 1; // Количество игроков в команде
-const teamsInGame = 2; // Количество команд в игре
 const startMana = 1000; // Начальное количество маны
 const manaRegen = 10; // Регенерация маны в зонах регенерации маны
-const baseSize = [100,100]; // Размер сторон базы
 const manaZoneWidth = 100; // Ширина мана-круга
 const manaZoneDistance = 1500; // Расстояние от базы до мана-круга
 const updateDataDelay = 1000; // Длительность между синхронизациями
-const playerSpeed = 10; // Скорость игрока
-const height = 6000; // Высота поля
-const width = 6000; // Ширина поля
-const basesPositions = [[width/4,height/2],[width*0.75,height/2]]; // Положения баз
 const playerScreenX = 900; // Ширина экрана
 const playerScreenY = 900; // Высота экрана
 
 let users = {}; // Тут хранятся объекты игроков
-let GAMES = {}; // Тут хранятся объекты партий
-let waitingGame = new Game();
+let waitingGames = {};
+let privateGames = {};
+for(let key in modesInfo) waitingGames[key] = new Game(key, 'random');
 
 function isPlayerInManaZone(playerPos,basePos){ // Алгоритм определения, находится ли игрок в мана-круге
     // Основной принцип: вычисляется расстояние от игрока до базы, и проверяется, примерно ранво ли это расстоянию от базы до кольца
@@ -200,8 +208,10 @@ function Collider(center,size){ // Класс прямоугольной обл�
     }
 }
 // Класс игровой партии
-function Game(){
+function Game(mode, type){
     // Установка позже заполняющихся параметров, лень объяснять каждый из них
+    let modeInfo = modesInfo[mode];
+    this.mode = mode;
     this.players = [];
     this.activeSelectors = [];
     this.teams = [];
@@ -218,7 +228,6 @@ function Game(){
         this.loops++;
         let game = this;
         this.players.forEach(function(player){ // До конца функции - код, выполняющийся для каждого игрока, текущий - переменная player
-            // console.log(player.spells[0].action);
             if("movement" in player/*Если текущий игрок находится в движении*/){
                 player.movement.move(); // Игрок двигается на один шаг
                 player.isOnBase = player.collider.isTouching(player.team.baseCollider); // Обновляется нахождение игрока на базе
@@ -278,11 +287,30 @@ function Game(){
     let loopTimer;
     let id = Symbol();
     this.colliders = [];
-    GAMES[id] = this;
     this.send = function(msg,func){ // Функция оповещения всех игроков партии, принцып её работы не важен
         this.teams.forEach(function(team){
             team.send(msg,func);
         });
+    }
+    this.toSendingData(forWho){
+        let result = 'empty';
+        switch(type){
+            case 'random':
+                switch(forWho){
+                    case 'player':
+                        result = {  teamsCount: modesInfo[mode]['teams in game'],
+                                    playersCount: modesInfo[mode]['players in team'],
+                                    mode: mode,
+                                    playersCount: this.players.length};
+                        break;
+                    case 'spectator':
+                        break;
+                }
+                break;
+            case 'private':
+                break;
+        }
+        return result;
     }
     this.start = function(){ // Функция запускается, когда партия н ачинается. А объект партии создаётся, когда есть хоть 1 игрок
 
@@ -291,6 +319,7 @@ function Game(){
             let spells = []; // Создаётся массив заклинаний, созданных игроком в меню
             player.spells.forEach(spell=>spells.push(spell.toSendingData())); // ...и заполняется
             let message = {
+                settings: modeInfo,
                 me:{
                     position: player.position,
                     color: player.color,
@@ -324,7 +353,7 @@ function Game(){
         winner.others.forEach(other=>other.send("loose",()=>""));
         clearInterval(loopTimer);
         clearInterval(updateLoopID);
-        delete GAMES[id];
+        this.players.forEach(player=>delete player.game)
     };
     this.addPlayer = function(player){ // Запускается, когда в ждущую игру присоеденяеся человек
         playersCount++; // Увиличивается счётчик игроков
@@ -572,19 +601,67 @@ function User(send,id,color,position){
 }
 
 module.exports = {
-    addUserToGame: function(player,spells){
-        player.game = waitingGame;
-        spells.forEach(spell=>{
-            let newSpell = new Spell(player);
-            newSpell.fromSendingData(spell);
-            player.spells.push(newSpell);
-            console.log(newSpell);
-        });
+    addUserToGame: function(player,spells,type,data){
+        let succes = true;
+        let error = "";
+        let gameData = {};
+        if(type=='random'){
+            spells.forEach((spell, index)=>{
+                let newSpell = new Spell(player);
+                let isSpellCorrect = newSpell.fromSendingData(spell);
+                if(isSpellCorrect == 'correct'){
+                    player.spells.push(newSpell);
+                }else {
+                    succes = false;
+                    error = 'Incorrect spell number '+index+', '+isSpellCorrect;
+                }
+            });
+
+            if(!succes){
+                player.send('adding to game', {succes: false, error: error});
+                return;
+            }
+            let game = waitingGames[data.mode];
+            player.game = game;
+            player.send('adding to game', {succes: true, gameInfo: game.toSendingData(player)});
+            if(game.addPlayer(player)) waitingGames[data.mode] = new Game(data.mode, 'random')
+            game.send('plus player',()=>'');
+        }else if(type=='private'){
+            if(data.key in secureGames){
+                spells.forEach((spell, index) => {
+                    let newSpell = new Spell(player);
+                    let isSpellCorrect = newSpell.fromSendingData(spell);
+                    if(isSpellCorrect == 'correct'){
+                        player.spells.push(newSpell);
+                    }else {
+                        succes = false;
+                        error = 'Incorrect spell number '+index+', '+isSpellCorrect;
+                    }
+                });
+
+                if(!succes){
+                    player.send('adding to game', {succes: false, error: error});
+                    return;
+                }
+
+                player.state =
+
+            }else {
+                succes = false;
+                error = 'Unknown key';
+            }
+        }else {
+            succes = false;
+            error = 'Unknown type';
+        }
         if(waitingGame.addPlayer(player)){
             waitingGame = new Game();
         }else {
             player.send("wait");
         }
+    },
+    userChoosed: function(msg){
+        if(msg.key in privateGames){}else{}
     },
     addUser: function(id,send,color){
         let user = new User(send,id,color,[0,0]);
@@ -599,4 +676,5 @@ module.exports = {
     speed: playerSpeed,
     fieldWidth: width,
     fieldHeight: height,
-    baseSize: baseSize};
+    baseSize: baseSize
+};

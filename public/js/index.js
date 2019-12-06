@@ -243,7 +243,7 @@ socket.on('setup', function(msg){
         if(state==0) socket.emit("started",{spells: testSpellsMessage});
     });
 });
-window.addEventListener("load",function(){
+window.addEventListener("load", function(){
     let bg = new Image();
     bg.src = 'graphic/bg.png';
     ctx.font = "20px serif";
