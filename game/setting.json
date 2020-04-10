@@ -1,0 +1,24 @@
+{
+    "modes": {
+        "DM": {
+            "points": {
+                "stun": 5
+            },
+            "needPointsToWin": 20,
+            "width": 6000,
+            "height": 6000,
+            "player speed": 10,
+            "players in team": 1,
+            "base size": [100,100],
+            "bases positions": [[1500,3000],[4500,3000]]
+        }
+    },
+    "FPS": 10,
+    "max mana": 2000,
+    "start mana": 1000,
+    "mana regen": 10,
+    "mana zone width": 100,
+    "mana zone distance": 1500,
+    "sync delay": 1000,
+    "viewport": [900, 900]
+}

@@ -5,7 +5,17 @@
         <link rel="stylesheet" type="text/css" href="index.css">
     </head>
     <body>
-        <canvas id="game-canvas" style="border: 2px solid black; display: none;"></canvas>
+        <!-- Scripts -->
+        <script type="text/javascript" src="js/sceneManager.js"></script>
+        <script type="text/javascript" src="js/fileReader.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+        <script src="js/index.js"></script>
+        <!-- Scenes -->
+        <div id="game">
+            <canvas id="game-canvas" style="border: 2px solid black;"></canvas>
+        </div>
+        <div id="create-spell"></div>
         <form id="create-game" action="POST">
             <h5>Создать игру</h5>
             Доступ:
@@ -19,15 +29,9 @@
                 <%}%>
             </select>
         </form>
-        <div id="create-spell" style="display: none"></div>
         <div id="main_menu">
             <div class="button">Присоединиться</div>
             <div class="button">Создать</div>
         </div>
-        <script type="text/javascript" src="js/sceneManager.js"></script>
-        <script type="text/javascript" src="js/fileReader.js"></script>
-        <script src="/socket.io/socket.io.js"></script>
-        <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
-        <script src="js/index.js"></script>
     </body>
 </html>

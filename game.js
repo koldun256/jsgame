@@ -155,7 +155,9 @@ const modesInfo = {
          "players in team": 1,
          "teams in game": 2,
          "base size": [100,100],
-         "bases positions": [[1500,3000],[4500,3000]]
+         "bases positions": [[1500,3000],[4500,3000]],
+         "screenWindth": 900,
+         "screenHeight": 900
     }
 
 
@@ -212,6 +214,7 @@ function Game(mode, type){
     // Установка позже заполняющихся параметров, лень объяснять каждый из них
     let modeInfo = modesInfo[mode];
     this.mode = mode;
+    this.modeInfo = modeInfo;
     this.players = [];
     this.activeSelectors = [];
     this.teams = [];
@@ -311,6 +314,9 @@ function Game(mode, type){
                 break;
         }
         return result;
+    }
+    this.getSetting = function(){
+        // let result = {};
     }
     this.start = function(){ // Функция запускается, когда партия н ачинается. А объект партии создаётся, когда есть хоть 1 игрок
 
@@ -605,7 +611,7 @@ module.exports = {
         let succes = true;
         let error = "";
         let gameData = {};
-        if(type=='random'){
+        if(type == 'random'){
             spells.forEach((spell, index)=>{
                 let newSpell = new Spell(player);
                 let isSpellCorrect = newSpell.fromSendingData(spell);
