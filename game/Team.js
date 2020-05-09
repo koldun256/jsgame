@@ -17,7 +17,6 @@ function Team(setting, room){
     this.add            = player => {
         if(players.length < playerCount){
             player.team = this
-            player.position = [...basePosition]
             players.push(player)
         }
     }
