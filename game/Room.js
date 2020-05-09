@@ -20,7 +20,7 @@ function Room(roomSetting){
     }
     function autoGetTeam(){
         let result
-        let minimum = 1000
+        let minimum = teams[0].players().length
         teams.forEach(team => {
             if(team.players().length < minimum) result = team
         })
@@ -73,13 +73,13 @@ function Room(roomSetting){
         if(teamID){
             team = Team.getByID(teamID)
             if(!teams.includes(team)) {
-                console.log('adding to unexistent team error')
-                return
+                throw 'adding to unexistent team'
             }
         }else {
             team = autoGetTeam()
         }
         team.add(player)
+        this.send('adding to waiting', () => player.data('connect to waiting'))
         this.addGameObject({
             object: player,
             type: 'player',

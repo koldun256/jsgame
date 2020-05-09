@@ -16,51 +16,49 @@ module.exports = {
 
     parametersDefault: [10, 5, 3],
 
-    validateParameters: [   value => typeof value == 'number',
-                            value => typeof value == 'number',
-                            value => typeof value == 'number'],
+    valid: parameters => parameters.reduce((acc, parameter) => acc && typeof parameter == 'number', true),
 
     selectors: [{type: 'place', defenition: 'Направление'}],
 
-    manaCost: (parameters, SMCs) => parameters[0] * parameters[1] * parameters[2],
-
     create: (owner, parameters, selectors) => {
-        let object = {cast: () => selectors[0].cast()
+        return object = {
+            select: () => {
+                return new Promise(async resolve => {
+                    let place = await selectors[0].select()
 
-        selectors[0].returnResult = function(result) {
-            function Bullet(){
-                this.position = [...owner.position]
-                this.movement = new Movement(   this,
-                                                new Direction(  [...owner.position],
-                                                                result),
-                                                this.parameters[0],
-                                                false)
-                this.collider = new Collider(    this,
-                                                [this.parameters[2], this.parameters[2]],
-                                                'bullet')
-                this.collider.onTouch('player', player => object.returnResult([player]))
-                this.data = function(situation){
-                    let data = {empty: 'empty'}
-                    switch(situation){
-                        case 'see':
-                            data = {color:      owner.team.color,
-                                    position:   [...bullet.position],
-                                    speed:      parameters[0],
-                                    lifetime:   parameters[1],
-                                    size:       parameters[2],
-                                    direction:  bullet.movement.direction.toString()}
+                    function Bullet(){
+                        this.position = [...owner.position]
+                        this.movement = new Movement(   this,
+                                                        new Direction([...owner.position], place),
+                                                        this.parameters[0],
+                                                        false)
+                        this.collider = new Collider(    this,
+                                                        [this.parameters[2], this.parameters[2]],
+                                                        'bullet')
+                        this.collider.onTouch('player', player => resolve([player]))
+                        this.data = function(situation){
+                            let data = {empty: 'empty'}
+                            switch(situation){
+                                case 'see':
+                                    data = {color:      owner.team.color,
+                                            position:   [...bullet.position],
+                                            speed:      parameters[0],
+                                            lifetime:   parameters[1],
+                                            size:       parameters[2],
+                                            direction:  bullet.movement.direction.toString()}
+                            }
+                            return data
+                        }
                     }
-                    return data
-                }
-            }
-            let bullet = new Bullet()
-            owner.room.addGameObject({  object: bullet,
-                                        type: 'bullet',
-                                        needsMove: true,
-                                        lifetime: parameters[1],
-                                        visible: true}
+                    let bullet = new Bullet()
+                    owner.room.addGameObject({  object: bullet,
+                                                type: 'bullet',
+                                                needsMove: true,
+                                                lifetime: parameters[1],
+                                                visible: true})
+                })
+            },
+            mana: () => parameters[0] * parameters[1] * parameters[2]
         }
-
-        return object
     }
 }

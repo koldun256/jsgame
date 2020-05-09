@@ -10,7 +10,8 @@
             "player speed": 10,
             "players in team": 1,
             "base size": [100,100],
-            "bases positions": [[1500,3000],[4500,3000]]
+            "bases positions": [[1500,3000],[4500,3000]],
+            "player size": [5, 5]
         }
     },
     "FPS": 10,

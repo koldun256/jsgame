@@ -9,11 +9,11 @@ module.exports = {
 
     parametersDefault: [],
 
-    validateParameters: () => true,
+    valid: () => true,
 
     selectors: [],
 
     manaCost: 3,
 
-    create: owner => return { cast: () => returnResult(owner.others) }
+    create: owner => return { cast: new Promise(resolve => resolve(owner.others)), mana: () => 3 }
 }
