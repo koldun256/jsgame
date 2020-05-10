@@ -1,14 +1,14 @@
 const Movement  = require('./Movement.js')
 const Direction = require('./Direction.js')
 const Collider  = require('./Collider.js')
-function Player(socket, spells, setting){
+function Player(socket, setting){
     this.id         = setting.id
     this.name       = setting.name
     this.socket     = socket
     this.movement   = Movement.zero()
     this.state      = 'waiting'
     this.seeing     = new Set()
-    this.spells     = spells
+    this.spells     = null
     this.room       = setting.room
     this.setting    = null
     socket.on('movement target', function(target){
@@ -67,7 +67,7 @@ function Player(socket, spells, setting){
                         ...this.setting,
                         team: this.team.id,
                         position: this.position,
-                        
+
                     }
                 break
             case 'connect to waiting':
@@ -85,3 +85,5 @@ function Player(socket, spells, setting){
     this.send = (event, message) => socket.emit(event, message)
 
 }
+
+module.exports = Player

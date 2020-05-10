@@ -1,6 +1,7 @@
 let colliders = {};
 let listeners = [];
 function Collider(owner, size, type){
+    console.log('a'+size)
     this.size       = [...size]
     this.position   = owner.position
     this.owner      = owner
@@ -66,7 +67,8 @@ Collider.update = function(){
 }
 Collider.generateManaZones = function(basePositions, distance, width, room){
     basePositions.forEach(basePosition => {
-        let zone = new Collider({position: basePosition, room: room}, 0, 'mana zone')
+        console.log('e '+basePosition)
+        let zone = new Collider({position: basePosition, room: room}, [0,0], 'mana zone')
         zone.isTouching = other => {
             function calcDistance(pointA,pointB){
                 return Math.abs(Math.sqrt((pointA[0]-pointB[0])**2 + (pointA[1]-pointB[1])**2))

@@ -1,4 +1,4 @@
-const Dirction = require('./Direction.js')
+const Direction = require('./Direction.js')
 function Movement(owner, direction, speed, hasEnd){
     this.move = () => {
         let delta = direction.getStep(speed)
@@ -6,6 +6,15 @@ function Movement(owner, direction, speed, hasEnd){
         owner.position[1] += delta[1]
         if(hasEnd && !direction.inEdges(owner.position)) owner.stop()
     }
+    this.data = situation => {
+        switch(situation){
+            case 'sync':
+                return {
+
+                }
+                break
+        }
+    }
 }
-Movement.zero = () => new Movement({position: [0,0]},new Direction([0,0], [0,0]), 0, false)
+Movement.zero = () => new Movement({position: [0,0]}, new Direction([0,0], [0,0]), 0, false)
 module.exports = Movement

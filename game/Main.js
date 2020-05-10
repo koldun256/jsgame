@@ -1,5 +1,5 @@
 const util = require('./util.js')
-const User = require('./user')
+const User = require('./User')
 
 let eventListeners = {}
 let Main = {}

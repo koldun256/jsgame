@@ -23,10 +23,19 @@ function Room(roomSetting){
                 maxMana:    setting['max mana']
             })
         })
-        this.send('room start', player => return {
+        players.forEach(function(player){
+            this.addGameObject({
+                object: player,
+                type: 'player',
+                needsMove: true,
+                visible: true,
+                needsMana: true
+            })
+        })
+        this.send('room start', player => {return {
                             me: player.data('room start to me'),
                             others: player.others.map(other => other.data('room start to others'))
-                        })
+                        }})
         Main.broadcast('room start', this.id)
         update = Main.on('update', onFrame)
         sync = Main.on('sync', onSync)
@@ -34,10 +43,11 @@ function Room(roomSetting){
     }
     function autoGetTeam(){
         let result
-        let minimum = teams[0].players().length
+        let minimum = Infinity
         teams.forEach(team => {
             if(team.players().length < minimum) result = team
         })
+        console.log('miazmos '+result)
         return result
     }
     function onFrame(){
@@ -63,6 +73,7 @@ function Room(roomSetting){
         gameObject.id = util.generateID()
         gameObject.object.room = this
         gameObjects.push(gameObject)
+        console.log(gameObject)
         if(gameObject.visible) gameObject.object.collider.onTouch('viewport', player => player.see(gm.object))
         if(gameObject.needsMana) gameObject.object.collider.onStay('mana zone', () => gameObject.object.addMana(setting['mana regen']))
     }
@@ -80,9 +91,11 @@ function Room(roomSetting){
         return result
     }
     this.send = function(msg, genContent){
-        this.getGameObjects('type', 'player').forEach(player => player.send(msg, genContent(player)))
+        console.log(msg)
+        players.forEach(player => player.send(msg, genContent(player)))
     }
     this.addPlayer = function(player, teamID){
+        console.log(player.name)
         let team
         if(teamID){
             team = Team.getByID(teamID)
@@ -94,15 +107,8 @@ function Room(roomSetting){
         }
         team.add(player)
         player.game = this
-        players.push(player)
         this.send('adding to waiting', () => player.data('connect to waiting'))
-        this.addGameObject({
-            object: player,
-            type: 'player',
-            needsMove: true,
-            visible: true,
-            needsMana: true
-        })
+        players.push(player)
 
         let hasNotFullTeam = false
         teams.forEach(team => {
@@ -116,11 +122,25 @@ function Room(roomSetting){
                 return {
                     winner: params.winner.id
                 }
+                break
+            case 'connect':
+                console.log(players.length)
+                return {
+                    waiting: players.map(player => player.data('connect to waiting')),
+                    id: this.id
+                }
         }
     }
     this.isWaiting = true
 
-    setting.modes[roomSetting.mode]['bases positions'].forEach(basePosition => teams.push(new Team(basePosition, setting.modes[roomSetting.mode]['players in team'], this)))
+    setting.modes[roomSetting.mode]['bases positions'].forEach(basePosition => {
+        teams.push(new Team({
+                basePosition,
+                playersCount: setting.modes[roomSetting.mode]['players in team'],
+                pointToWin: setting.modes[roomSetting.mode]['needsPointsToWin'],
+                baseSize: setting.modes[roomSetting.mode]['base size']
+            }, this))
+    })
 
     Collider.generateManaZones( setting.modes[roomSetting.mode]['bases positions'],
                                 setting['mana zone distance'],
@@ -128,7 +148,8 @@ function Room(roomSetting){
                                 this)
     rooms.push(this)
 }
+new Room({mode: 'DM'})
 Room.getRooms = () => [...rooms]
 Room.getRoomByID = id => {for(let room of rooms) if(room.id == id) return room}
-Room.getRandom = () => rooms[Math.floor(Math.random()*rooms.length)]
+Room.random = () => rooms[Math.floor(Math.random()*rooms.length)]
 module.exports = Room

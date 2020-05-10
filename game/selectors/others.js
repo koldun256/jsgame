@@ -15,5 +15,7 @@ module.exports = {
 
     manaCost: 3,
 
-    create: owner => return { cast: new Promise(resolve => resolve(owner.others)), mana: () => 3 }
+    create: owner => {
+        return { select: () => new Promise(resolve => resolve(owner.others)), mana: () => 3 }
+    }
 }

@@ -9,16 +9,18 @@ function User(socket){
     socket.on('request room enter', function(data) {
         try{
             let room = Room.random()
-            this.player = new Player(   socket,
-                                        data.spells.map(spellData => new Spell(this.player, spellData)),
+            let player = new Player(   socket,
                                         {
                                             id:         util.generateID(),
                                             name:       data.name,
                                             room
                                         })
+            player.spells = data.spells.map(spellData => new Spell(player, spellData))
+            this.player = player
             room.addPlayer(this.player)
             socket.emit('response room enter', {status: 'success', room: room.data('connect')})
         }catch(e){
+            console.log(e)
             socket.emit('response room enter', {status: 'error', error: e})
         }
 

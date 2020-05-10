@@ -6,7 +6,7 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http)
 const favicon = require('serve-favicon')
 const randomColor = require('randomcolor')
-const game = require('./src/Main')
+const game = require('./game/Main')
 
 const PORT = process.env.PORT || 5000;
 

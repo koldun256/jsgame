@@ -17,7 +17,7 @@ function Spell(player, data){
     this.action = parse(data)
     this.player = player
     this.mana   = this.action.mana
-    this.cast   = this.action.cast()
+    this.cast   = this.action.cast
 }
 
 module.exports = Spell
