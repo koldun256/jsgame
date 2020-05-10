@@ -1,37 +1,49 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <link rel="icon" href="graphic/favicon.ico" type="image/x-icon"/>
-        <link rel="stylesheet" type="text/css" href="index.css">
+        <meta charset="utf-8">
+        <title>Vyrf tester</title>
     </head>
     <body>
-        <!-- Scripts -->
-        <script type="text/javascript" src="js/sceneManager.js"></script>
-        <script type="text/javascript" src="js/fileReader.js"></script>
         <script src="/socket.io/socket.io.js"></script>
         <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
-        <script src="js/index.js"></script>
-        <!-- Scenes -->
-        <div id="game">
-            <canvas id="game-canvas" style="border: 2px solid black;"></canvas>
-        </div>
-        <div id="create-spell"></div>
-        <form id="create-game" action="POST">
-            <h5>Создать игру</h5>
-            Доступ:
-            <select>
-                <option value="secure">Доступ по коду</option>
-                <option value="random">Случайный подбор</option>
-            </select>
-            Режим: <select>
-                <%for(let i = 0;i < modes.length;i++){%>
-                <option value="<%=modes[i]%>"><%=modes[i]%></option>
-                <%}%>
-            </select>
-        </form>
-        <div id="main_menu">
-            <div class="button">Присоединиться</div>
-            <div class="button">Создать</div>
-        </div>
+        Введите заголовок<br>
+        <input type="text" id="header" value=""><br>
+        Введите сообщение<br>
+        <textarea id="message" rows="8" cols="80">{
+  "spells": [
+    {
+      "action": "stun",
+      "props": [10],
+      "selectors": [{"name": "others", "props": [], "selectors": []}]
+    },
+    {
+      "action": "stun",
+      "props": [10],
+      "selectors": [{"name": "others", "props": [], "selectors": []}]
+    },
+    {
+      "action": "stun",
+      "props": [10],
+      "selectors": [{"name": "others", "props": [], "selectors": []}]
+    }
+  ],
+  "name": "pacman"
+}</textarea><br>
+        <div id="send" style="cursor: pointer; background-color: green; width: 100px; height: 50px;">Отправить</div>
+        <hr>
+        <script>
+            let socket = io()
+            socket.onevent = function(data){
+                $('#send').after(`
+                    <hr>
+                    <div>
+                        event: ${data.data[0]}<br>
+                        body: ${JSON.stringify(data.data[1])/*.replace(/\{/g, '{<br>').replace(/\,/, ',<br>')*/}
+                    </div>
+                `)
+            }
+            $('#send').click(() => socket.emit($('#header').val(), JSON.parse($('#message').val())))
+        </script>
     </body>
 </html>
