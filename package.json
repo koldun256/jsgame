@@ -14,8 +14,9 @@
     "webpack-cli": "^3.3.11"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index"
+      "dev-test": "CLIENT=test nodemon index",
+      "dev-client": "CLIENT=app concurrently \"nodemon index\" \"npm run client --prefix client\"",
+      "start": "node index"
   },
   "repository": {
     "type": "git",
