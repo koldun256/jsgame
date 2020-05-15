@@ -17,10 +17,13 @@ function User(socket){
                                         })
             player.spells = data.spells.map(spellData => new Spell(player, spellData))
             this.player = player
+            console.log(1)
             room.addPlayer(this.player)
-            socket.emit('response room enter', {status: 'success', room: room.data('connect')})
+            let roomData = room.data('connect')
+            socket.emit('response room enter', {status: 'success', room: roomData})
+            console.log(3)
         }catch(e){
-            console.log(e)
+            console.log(e.stack)
             socket.emit('response room enter', {status: 'error', error: e})
         }
 

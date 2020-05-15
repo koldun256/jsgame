@@ -13,6 +13,6 @@ const PORT = process.env.PORT || 5000;
 app.use(express.static('public'));
 
 app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'));
-io.on('connection', socket => game.createUser(socket))
 
+io.on('connection', socket => game.createUser(socket))
 http.listen(PORT, ()=>console.log(`listening on port ${PORT}`));

@@ -22,7 +22,9 @@
     "webpack-dev-server": "^3.11.0"
   },
   "dependencies": {
+    "jquery": "^3.5.1",
     "react": "^16.13.1",
-    "react-dom": "^16.13.1"
+    "react-dom": "^16.13.1",
+    "react-jss": "^10.1.1"
   }
 }

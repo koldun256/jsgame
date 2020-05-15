@@ -10,20 +10,19 @@ function Room(roomSetting){
     let gameObjects = []
     let teams = []
     let players = []
-
-    function start(){
-        players.forEach(player => player.setPosition([player.team.position]))
-        players.forEach(player => player.others = players.filter(other => player.id != other.id))
+    this.start = function(){
+        console.log('room starting!!')
+        console.log(players.length)// reload
+        players.forEach(player => player.init({
+            speed:      setting.modes[roomSetting.mode]['player speed'],
+            viewport:   setting['viewport'],
+            size:       setting.modes[roomSetting.mode]['player size'],
+            startMana:  setting['start mana'],
+            maxMana:    setting['max mana']
+        }))
         players.forEach(function(player){
-            player.init({
-                speed:      setting.modes[room.mode]['player speed'],
-                viewport:   setting['viewport'],
-                size:       setting.modes[room.mode]['player size'],
-                startMana:  setting['start mana'],
-                maxMana:    setting['max mana']
-            })
-        })
-        players.forEach(function(player){
+            player.setPosition([player.team.position])
+            player.others = players.filter(other => player.id != other.id)
             this.addGameObject({
                 object: player,
                 type: 'player',
@@ -31,26 +30,29 @@ function Room(roomSetting){
                 visible: true,
                 needsMana: true
             })
-        })
-        this.send('room start', player => {return {
-                            me: player.data('room start to me'),
-                            others: player.others.map(other => other.data('room start to others'))
-                        }})
+            let data = {
+                me: player.data('room start to me'),
+                others: player.others.map(other => other.data('room start to others'))
+            }
+            player.send('room start', data)
+        }.bind(this))
         Main.broadcast('room start', this.id)
-        update = Main.on('update', onFrame)
-        sync = Main.on('sync', onSync)
+        update = Main.on('update', this.onFrame)
+        sync = Main.on('sync', this.onSync)
         isWaiting = false
     }
     function autoGetTeam(){
         let result
         let minimum = Infinity
         teams.forEach(team => {
-            if(team.players().length < minimum) result = team
+            if(team.players().length < minimum) {
+                result = team
+                minimum = team.players().length
+            }
         })
-        console.log('miazmos '+result)
         return result
     }
-    function onFrame(){
+    this.onFrame = function(){
         this.getGameObjects('lifetime').forEach(gm => {
             gm.lifetime--
             if(gm.lifetime < 0) this.destroy(gm.id)
@@ -58,7 +60,7 @@ function Room(roomSetting){
         this.getGameObjects('movable', true).forEach(gm => gm.object.movement.move())
         Collider.update()
     }
-    function onSync(){
+    this.onSync = function(){
         this.send('sync', player => player.data('sync'))
     }
 
@@ -73,7 +75,6 @@ function Room(roomSetting){
         gameObject.id = util.generateID()
         gameObject.object.room = this
         gameObjects.push(gameObject)
-        console.log(gameObject)
         if(gameObject.visible) gameObject.object.collider.onTouch('viewport', player => player.see(gm.object))
         if(gameObject.needsMana) gameObject.object.collider.onStay('mana zone', () => gameObject.object.addMana(setting['mana regen']))
     }
@@ -91,11 +92,9 @@ function Room(roomSetting){
         return result
     }
     this.send = function(msg, genContent){
-        console.log(msg)
         players.forEach(player => player.send(msg, genContent(player)))
     }
     this.addPlayer = function(player, teamID){
-        console.log(player.name)
         let team
         if(teamID){
             team = Team.getByID(teamID)
@@ -106,15 +105,17 @@ function Room(roomSetting){
             team = autoGetTeam()
         }
         team.add(player)
+        console.log('adding to game player '+player.name)
+        console.log('teams: ' + teams.map(team => `players: ${team.players().map(player => (player.name+' '))}\n`))
         player.game = this
-        this.send('adding to waiting', () => player.data('connect to waiting'))
         players.push(player)
+        this.send('adding to waiting', () => player.data('connect to waiting'))
 
-        let hasNotFullTeam = false
+        let allTeamsFilled = true
         teams.forEach(team => {
-            if(!team.full()) hasNotFullTeam = true
+            if(!team.full()) allTeamsFilled = false
         })
-        if(!hasNotFullTeam) start()
+        if(allTeamsFilled) setTimeout(this.start.bind(this), 1000)
     }
     this.data = function(situation, params){
         switch(situation){
@@ -124,14 +125,15 @@ function Room(roomSetting){
                 }
                 break
             case 'connect':
-                console.log(players.length)
-                return {
+                let data = {
                     waiting: players.map(player => player.data('connect to waiting')),
                     id: this.id
                 }
+                return data
         }
     }
     this.isWaiting = true
+
 
     setting.modes[roomSetting.mode]['bases positions'].forEach(basePosition => {
         teams.push(new Team({

@@ -13,9 +13,12 @@
     "webpack": "^4.43.0",
     "webpack-cli": "^3.3.11"
   },
+  "nodemonConfig": {
+      "ignore": ["client/*"]
+  },
   "scripts": {
       "dev-test": "CLIENT=test nodemon index",
-      "dev-client": "CLIENT=app concurrently \"nodemon index\" \"npm run client --prefix client\"",
+      "dev-client": "CLIENT=app concurrently \"nodemon index --ignore ''\" \"npm run client --prefix client\"",
       "start": "node index"
   },
   "repository": {

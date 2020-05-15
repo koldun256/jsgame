@@ -7,7 +7,6 @@ function Team(setting, room){
     this.id             = util.generateID()
     this.color          = require('randomcolor')()
     this.position       = setting.basePosition
-    console.log('c')
     this.baseCollider   = new Collider(this, setting.baseSize, 'base')
     this.full           = () => players.length == setting.playersCount
     this.players        = () => players
@@ -15,8 +14,10 @@ function Team(setting, room){
         this.points += points
         if(this.points >= setting.pointsToWin) room.end(this.id)
     }
-    this.add            = player => {
-        if(players.length < setting.playerCount){
+    this.add            = function(player) {
+        if(players.length <= setting.playersCount){
+            console.log('team adding')
+            console.log(player.name)
             player.team = this
             players.push(player)
         }

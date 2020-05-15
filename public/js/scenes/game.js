@@ -140,7 +140,6 @@ function drawBullets(){
                     bullet.position[1]-bullet.size/2-screenCenter[1]+screenHeight/2,
                     bullet.size,
                     bullet.size];
-        console.log(bulletDrawing);
         ctx.fillStyle = bullet.color;
         ctx.fillRect(...bulletDrawing);
     });
@@ -368,8 +367,6 @@ socket.on("get target",     msg=>{
     }
 });
 socket.on('bullet',         msg=>{
-    console.log("|||||||||||||||||||||||||||||||||||||||||||||||");
-    console.log(msg);
     let bullet = {size: msg.size, position: msg.position, color: msg.color};
     bullet.movement = new Movement(bullet,msg.target,msg.speed,msg.lifetime*10);
 

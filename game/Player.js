@@ -17,7 +17,7 @@ function Player(socket, setting){
     socket.on('cast', function(index) {
         let spell = this.spells[spell]
         if(!spell) return socket.emit('unexistent spell')
-        if(spell.mana() > this.mana) return socket.emit('not enough mana')
+        if(spell.mana() > this.mana) return socket.emit('not enough mana') // reload
         this.mana -= spell.mana()
         spell.cast()
     })
@@ -25,14 +25,15 @@ function Player(socket, setting){
         this.movement = Movement.zero()
     }
     this.init = function(setting){
+        console.log('initing player ', this.name)
         this.inited     = true
         this.viewport   = new Collider(this, setting.viewport, 'viewport')
-        this.body       = new Collider(this, setting.size, 'player')
+        this.collider       = new Collider(this, setting.size, 'player')
         this.mana       = setting.startMana
         this.maxMana    = setting.maxMana
         this.speed      = setting.speed
         this.setting    = setting
-        this.color      = setting.color
+        this.color      = setting.color //e
         this.state      = 'active'
     }
     this.setPosition = function(newPosition){
@@ -52,10 +53,11 @@ function Player(socket, setting){
                 }
                 break
             case 'room start to others':
+                console.log('jkl', this.inited)
                 return {
                     id:     this.id,
                     color:  this.color,
-                    name:   this.setting.name,
+                    name:   setting.name,
                     speed:  this.speed,
                     size:   this.setting.size,
                     teamID: this.team.id
@@ -72,7 +74,8 @@ function Player(socket, setting){
                 break
             case 'connect to waiting':
                 return {
-                    team: this.team,
+                    id: this.id,
+                    team: this.team.id,
                     name: this.name
                 }
                 break
@@ -82,7 +85,11 @@ function Player(socket, setting){
         this.mana += mana
         if(this.mana >= setting.maxMana) this.mana = setting.maxMana
     }
-    this.send = (event, message) => socket.emit(event, message)
+    this.send = async (event, message) => {
+        console.log('sending message ')
+        console.log(message)
+        socket.emit(event, message)
+    }
 
 }
 

@@ -35,6 +35,7 @@
         <script>
             let socket = io()
             socket.onevent = function(data){
+                console.log(data)
                 $('#send').after(`
                     <hr>
                     <div>

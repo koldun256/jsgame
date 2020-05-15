@@ -1,7 +1,6 @@
 let colliders = {};
 let listeners = [];
 function Collider(owner, size, type){
-    console.log('a'+size)
     this.size       = [...size]
     this.position   = owner.position
     this.owner      = owner
