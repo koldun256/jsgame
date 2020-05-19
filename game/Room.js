@@ -1,5 +1,4 @@
-const Main      = require('./Main.js')
-const Team      = require('./Team.js')
+vkconst Team      = require('./Team.js')
 const Collider  = require('./Collider.js')
 const setting   = require('./setting.js')
 const util      = require('./util.js')
@@ -23,6 +22,7 @@ function Room(roomSetting){
         players.forEach(function(player){
             player.setPosition([player.team.position])
             player.others = players.filter(other => player.id != other.id)
+            
             this.addGameObject({
                 object: player,
                 type: 'player',
