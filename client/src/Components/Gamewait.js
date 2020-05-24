@@ -2,9 +2,9 @@ import React, {Component} from 'react'
 import {socket} from '../util'
 
 function setupSocket(props){
-    console.log('AaAaAaAaaA')
     socket.on('room start', function(data){
         console.log('room start')
+        console.log(data.startSeeing)
         props.startPlay(data)
     })
 }

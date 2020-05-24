@@ -1,4 +1,5 @@
 import React, {Component} from 'react'
+import Viewport from './Viewport'
 
 class Gameplay extends Component {
     constructor(props){
@@ -8,8 +9,7 @@ class Gameplay extends Component {
     render(){
         return (
             <div>
-                Gameplay
-                {JSON.stringify(this.props.data)}
+                <Viewport players={this.props.data.others} seeing={this.props.data.startSeeing} me={this.props.data.me}/>
             </div>
         )
     }

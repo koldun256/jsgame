@@ -9,16 +9,17 @@ function Collider(owner, size, type){
     this.isTouching = function(other){
         let a=false,b=false,c=false,d = false;
         if(other.position[0] > this.position[0]){
-            b = (other.position[0]-other.sizeX) < (this.position[0]+this.sizeX);
+            b = (other.position[0]-other.size[0]) < (this.position[0]+this.size[0]);
         }else{
-            a = (other.position[0]+other.sizeX) > (this.position[0]-this.sizeX);
+            a = (other.position[0]+other.size[0]) > (this.position[0]-this.size[0]);
         }
         if(other.position[1] > this.position[1]){
-            d = (other.position[1]-other.sizeY) < (this.position[1]+this.sizeY);
+            d = (other.position[1]-other.size[1]) < (this.position[1]+this.size[1]);
         }else {
-            c = (other.position[1]+other.sizeY) > (this.position[1]-this.sizeY);
+            c = (other.position[1]+other.size[1]) > (this.position[1]-this.size[1]);
         }
         let result = (a||b)&&(c||d);
+        console.log('mina', result)
         return result;
     }
     this.onExit     = (type, callback) => listeners.push({  targetType: type,
@@ -44,17 +45,16 @@ function Collider(owner, size, type){
 }
 Collider.update = function(){
     for(let listener of listeners){
-        for(let collider of colliders[listener.type]){
+        for(let collider of colliders[listener.targetType]){//reaload
+            console.log(listener.collider.owner)
             if( collider.id != listener.collider.id &&
                 collider.owner.room.id == listener.collider.owner.room.id) {
-
                 if(collider.isTouching(listener.collider)){
                     if(listener.eventType == 'enter'){
                         if(!listener.currentlyEntered.has(collider.id)) listener.callback(collider.owner)
-
                     }
                     if(listener.eventType == 'stay') listener.callback(collider.owner)
-                    listener.currentlyEntered.put(collider.id)
+                    listener.currentlyEntered.add(collider.id)
                 }else {
                     if(listener.eventType == 'exit' && listener.currentlyEntered.has(collider.id)) listener.callback(collider.owner)
                     listener.currentlyEntered.delete(collider.id)
@@ -66,7 +66,6 @@ Collider.update = function(){
 }
 Collider.generateManaZones = function(basePositions, distance, width, room){
     basePositions.forEach(basePosition => {
-        console.log('e '+basePosition)
         let zone = new Collider({position: basePosition, room: room}, [0,0], 'mana zone')
         zone.isTouching = other => {
             function calcDistance(pointA,pointB){

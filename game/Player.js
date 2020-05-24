@@ -10,6 +10,7 @@ function Player(socket, setting){
     this.seeing     = new Set()
     this.spells     = null
     this.room       = setting.room
+
     this.setting    = null
     socket.on('movement target', function(target){
         this.movement = new Movement(this, new Direction(this.position, target), this.speed, true)
@@ -49,28 +50,30 @@ function Player(socket, setting){
             case 'see':
                 return {
                     id: this.id,
-                    movement: this.movement.data()
+                    movement: this.movement.data(),
+                    position: this.position,
+                    type: 'player'
                 }
                 break
             case 'room start to others':
-                console.log('jkl', this.inited)
                 return {
                     id:     this.id,
                     color:  this.color,
                     name:   setting.name,
                     speed:  this.speed,
                     size:   this.setting.size,
-                    teamID: this.team.id
+                    teamID: this.team.id,
+                    position: this.position
                 }
                 break
             case 'room start to me':
                 if(!this.inited) return socket.emit('server error', {error: 'uninited player'})
-                return {id: this.id,
-                        ...this.setting,
-                        team: this.team.id,
-                        position: this.position,
-
-                    }
+                return {
+                    id: this.id,
+                    ...this.setting,
+                    team: this.team.id,
+                    position: this.position,
+                }
                 break
             case 'connect to waiting':
                 return {
@@ -85,9 +88,7 @@ function Player(socket, setting){
         this.mana += mana
         if(this.mana >= setting.maxMana) this.mana = setting.maxMana
     }
-    this.send = async (event, message) => {
-        console.log('sending message ')
-        console.log(message)
+    this.send = (event, message) => {
         socket.emit(event, message)
     }
 

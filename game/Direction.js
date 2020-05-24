@@ -2,6 +2,7 @@ const util = require('./util.js')
 function Direction(startPos, finishPos){
     let startDelta = [finishPos[0]-startPos[0], finishPos[1]-startPos[1]]
     let startSize = Math.sqrt(startDelta[0]**2 + startDelta**2)
+    this.end = finishPos
     this.getStep = size => {
         let k = size / startSize
         return [startDelta[0] * k, startDelta[1] * k]

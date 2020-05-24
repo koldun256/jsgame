@@ -11,7 +11,7 @@
             "players in team": 2,
             "base size": [100,100],
             "bases positions": [[1500,3000],[4500,3000]],
-            "player size": [5, 5]
+            "player size": [50, 50]
         }
     },
     "FPS": 10,

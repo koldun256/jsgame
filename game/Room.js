@@ -12,16 +12,15 @@ function Room(roomSetting){
     let players = []
     this.start = function(){
         console.log('room starting!!')
-        console.log(players.length)// reload
-        players.forEach(player => player.init({
-            speed:      setting.modes[roomSetting.mode]['player speed'],
-            viewport:   setting['viewport'],
-            size:       setting.modes[roomSetting.mode]['player size'],
-            startMana:  setting['start mana'],
-            maxMana:    setting['max mana']
-        }))
-        players.forEach(function(player){
-            player.setPosition([player.team.position])
+        players.forEach(player => {
+            player.setPosition([...player.team.position])
+            player.init({
+                speed:      setting.modes[roomSetting.mode]['player speed'],
+                viewport:   setting['viewport'],
+                size:       setting.modes[roomSetting.mode]['player size'],
+                startMana:  setting['start mana'],
+                maxMana:    setting['max mana']
+            })
             player.others = players.filter(other => player.id != other.id)
             this.addGameObject({
                 object: player,
@@ -30,12 +29,17 @@ function Room(roomSetting){
                 visible: true,
                 needsMana: true
             })
+        })
+        Collider.update()
+        players.forEach(function(player){
             let data = {
                 me: player.data('room start to me'),
-                others: player.others.map(other => other.data('room start to others'))
+                others: player.others.map(other => other.data('room start to others')),
+                startSeeing: [...player.seeing].map(object => object.data('see'))
             }
             player.send('room start', data)
         }.bind(this))
+        console.log([...players[0].seeing])
         Main.broadcast('room start', this.id)
         update = Main.on('update', this.onFrame)
         sync = Main.on('sync', this.onSync)
@@ -75,7 +79,7 @@ function Room(roomSetting){
         gameObject.id = util.generateID()
         gameObject.object.room = this
         gameObjects.push(gameObject)
-        if(gameObject.visible) gameObject.object.collider.onTouch('viewport', player => player.see(gm.object))
+        if(gameObject.visible) gameObject.object.collider.onTouch('viewport', player => player.see(gameObject.object))
         if(gameObject.needsMana) gameObject.object.collider.onStay('mana zone', () => gameObject.object.addMana(setting['mana regen']))
     }
     this.getGameObjects = function(...args){
@@ -135,14 +139,29 @@ function Room(roomSetting){
     this.isWaiting = true
 
 
-    setting.modes[roomSetting.mode]['bases positions'].forEach(basePosition => {
+    setting.modes[roomSetting.mode]['bases positions'].forEach((basePosition => {
+        //генерация баз и команд
+        let baseObject = {
+            position: basePosition,
+            room: this,
+            id: util.generateID()
+        }
+        baseObject.data = () => ({type:'base', position: basePosition, id: baseObject.id, type: 'base'}),
+        baseObject.collider = new Collider(baseObject, setting.modes[roomSetting.mode]['base size'], 'base')
+        this.addGameObject({
+            object: baseObject,
+            type: 'base',
+            needsMove: false,
+            visible: true,
+            needsMana: false
+        })
         teams.push(new Team({
                 basePosition,
                 playersCount: setting.modes[roomSetting.mode]['players in team'],
                 pointToWin: setting.modes[roomSetting.mode]['needsPointsToWin'],
                 baseSize: setting.modes[roomSetting.mode]['base size']
             }, this))
-    })
+    }).bind(this))
 
     Collider.generateManaZones( setting.modes[roomSetting.mode]['bases positions'],
                                 setting['mana zone distance'],
