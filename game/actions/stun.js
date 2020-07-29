@@ -1,4 +1,4 @@
-const setting = require('../setting.js')
+const setting = require('../setting.json')
 module.exports = {
     name: 'Стан',
 

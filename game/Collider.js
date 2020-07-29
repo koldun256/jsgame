@@ -19,7 +19,6 @@ function Collider(owner, size, type){
             c = (other.position[1]+other.size[1]) > (this.position[1]-this.size[1]);
         }
         let result = (a||b)&&(c||d);
-        console.log('mina', result)
         return result;
     }
     this.onExit     = (type, callback) => listeners.push({  targetType: type,
@@ -45,8 +44,7 @@ function Collider(owner, size, type){
 }
 Collider.update = function(){
     for(let listener of listeners){
-        for(let collider of colliders[listener.targetType]){//reaload
-            console.log(listener.collider.owner)
+        for(let collider of colliders[listener.targetType]){
             if( collider.id != listener.collider.id &&
                 collider.owner.room.id == listener.collider.owner.room.id) {
                 if(collider.isTouching(listener.collider)){

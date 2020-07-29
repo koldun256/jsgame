@@ -1,30 +1,24 @@
-import React, {Component} from 'react'
+import React, {useState, useEffect} from 'react'
 import Gameplay from './Gameplay'
 import Gamewait from './Gamewait'
 import {socket} from '../util'
 
-class Game extends Component {
-    constructor(props){
-        super(props)
-        this.state = {
-            location: 'wait'
-        }
-        this.startPlay = this.startPlay.bind(this) 
-    }
-    startPlay(data){
-        this.setState({data, location: 'play'})
-    }
-    render(){
-        if(this.state.location == 'wait'){
-            return(
-                <Gamewait data={this.props.setting} startPlay={this.startPlay}/>
-            )
-        }else {
-            return(
-                <Gameplay data={this.state.data}/>
-            )
-        }
+export default function Game(props){
+    let [location, setLocation] = useState('wait')
+    let [data, setData] = useState()
+	useEffect(() => {
+		socket.on('room start', msg => {
+			setData(data)
+			setLocation('play')
+		})		
+	}, [])
+    if(location == 'wait'){
+        return(
+			<Gamewait data={props.setting} />
+        )
+    }else {
+        return(
+            <Gameplay data={data}/>
+        )
     }
 }
-
-export default Game

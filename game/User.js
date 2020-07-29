@@ -2,7 +2,7 @@ const util = require('./util')
 const Player = require('./Player')
 const Spell = require('./Spell')
 const Room = require('./Room')
-const setting = require('./setting.js')
+const setting = require('./setting.json')
 
 function User(socket){
     this.player = null

@@ -9,4 +9,5 @@ module.exports.on = (event, listener) => {
 module.exports.broadcast = (event, ...args) => {
     if(event in eventListeners) eventListeners[event].forEach(listener => listener(...args))
 }
+setInterval(() => module.exports.broadcast('update'), 100)
 module.exports.createUser = socket => new User(socket)

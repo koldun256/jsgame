@@ -1,7 +1,7 @@
-import React, {Component} from 'react'
-import injectSheet from 'react-jss'
+import React from 'react'
+import {createUseStyles} from 'react-jss'
 
-const styles = {
+const useStyles = createUseStyles({
     button: {
         backgroundColor: 'green',
         width: 110,
@@ -11,16 +11,13 @@ const styles = {
         justifyContent: 'center',
         textAlign: 'center'
     }
-}
+})
 
-class Button extends Component {
-    render(...args){
-        return (
-            <div className={this.props.classes.button} onClick={this.props.click}>
-                <div>{this.props.text}</div>
-            </div>
-        )
-    }
+export default function Button(props){
+    let classes = useStyles()
+    return (
+        <div className={classes.button} onClick={props.click}>
+            <div>{props.text}</div>
+        </div>
+    )
 }
-
-export default injectSheet(styles)(Button)

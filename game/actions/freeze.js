@@ -3,7 +3,7 @@ module.exports = {
 
     defenishion: 'Игрок на несколько секунд тепряет возможность что-либо делать',
 
-    parameters: [{type: 'number', name: 'Длительность заморозки'}],
+    parameters: [{type: 'number', name: "Длительность заморозки"}],
 
     parametersDefault: [10],
 

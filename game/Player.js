@@ -14,7 +14,10 @@ function Player(socket, setting){
     this.setting    = null
     socket.on('movement target', function(target){
         this.movement = new Movement(this, new Direction(this.position, target), this.speed, true)
-    })
+        for(player of this.room.getGameObjects('type', player)){
+            player.send()
+        }
+    }.bind(this))
     socket.on('cast', function(index) {
         let spell = this.spells[spell]
         if(!spell) return socket.emit('unexistent spell')
@@ -29,15 +32,16 @@ function Player(socket, setting){
         console.log('initing player ', this.name)
         this.inited     = true
         this.viewport   = new Collider(this, setting.viewport, 'viewport')
-        this.collider       = new Collider(this, setting.size, 'player')
+        this.collider   = new Collider(this, setting.size, 'player')
         this.mana       = setting.startMana
         this.maxMana    = setting.maxMana
         this.speed      = setting.speed
         this.setting    = setting
-        this.color      = setting.color //e
+        this.color      = setting.color
         this.state      = 'active'
     }
     this.setPosition = function(newPosition){
+        console.log('position setting '+newPosition)
         this.stop()
         this.position = [...newPosition]
     }

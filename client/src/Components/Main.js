@@ -1,36 +1,27 @@
-import React, {Component} from 'react'
+import React, {useState, useEffect} from 'react'
 import Menu from './Menu'
 import Game from './Game'
+import {socket} from '../util'
 
-class Main extends Component {
-    constructor(props){
-        super(props)
+export default function Main(props){
+    let [location, setLocation] = useState('menu')
+    let [gameSetting, setGameSetting] = useState()
+	useEffect(() => {
+		socket.on("response room enter", data => {
+			setLocation('game')
+		})
+	}, []);
 
-        this.gotoGame = this.gotoGame.bind(this)
-        this.gotoMenu = this.gotoMenu.bind(this)
-
-        this.state = {location: 'menu'}
-    }
-    gotoGame(setting){
-        console.log('hii')
-        this.setState({location: 'game', gameSetting: setting})
-    }
-    gotoMenu(){
-        this.setState({location: 'menu'})
-    }
-    render(){
-        if(this.state.location == 'menu'){
-            console.log('1')
-            return (
-                <Menu game={this.gotoGame}/>
-            )
-        }else {
-            console.log('2')
-            return (
-                <Game setting={this.state.gameSetting} end={this.gotoMenu}/>
-            )
-        }
+    if(location == 'menu'){
+        return (
+            <Menu game={setting => {
+                setGameSetting(setting)
+                setLocation('game')
+            }}/>
+        )
+    }else {
+        return (
+            <Game setting={gameSetting} end={() => setLocation('menu')}/>
+        )
     }
 }
-
-export default Main

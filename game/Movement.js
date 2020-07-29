@@ -11,5 +11,7 @@ function Movement(owner, direction, speed, hasEnd){
         end: direction.end
     })
 }
-Movement.zero = () => new Movement({position: [0,0]}, new Direction([0,0], [0,0]), 0, false)
+Movement.zero = () => {
+    return new Movement({position: [0,0]}, new Direction([0,0], [0,0]), 0, false)
+}
 module.exports = Movement
