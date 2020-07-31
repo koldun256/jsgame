@@ -2,6 +2,7 @@ import React, {useState} from 'react'
 import {socket} from '../util'
 
 export default function Gamewait(props){
+	console.log(props)
     let [players, setPlayers] = useState(props.data.room.waiting)
 
     return (

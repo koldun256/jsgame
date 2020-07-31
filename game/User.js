@@ -5,26 +5,15 @@ const Room = require('./Room')
 const setting = require('./setting.json')
 
 function User(socket){
-    this.player = null
-    socket.on('request room enter', function(data) {
-        try{
+	this.createPlayer = function(name, room, team, spellsData){
+		return new Player(socket, name, room, team, spellsData)
+	}
+	socket.on('request room enter', data => {
+        try {
             let room = Room.random()
-            let player = new Player(   socket,
-                                        {
-                                            id:         util.generateID(),
-                                            name:       data.name,
-                                            room
-                                        })
-            player.spells = data.spells.map(spellData => new Spell(player, spellData))
-            this.player = player
-            console.log(1)
-            room.addPlayer(this.player)
-            let roomData = room.data('connect')
-            socket.emit('response room enter', {status: 'success', room: roomData})
-            console.log(3)
-        }catch(e){
+            room.addPlayer(this, data.name, data.spells, data.team)
+        }catch(e) {
             console.log(e.stack)
-            socket.emit('response room enter', {status: 'error', error: e})
         }
 
     })

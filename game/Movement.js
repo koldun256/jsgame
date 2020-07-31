@@ -1,4 +1,4 @@
-const Direction = require('./Direction.js')
+const Vector = require('./Vector.js')
 function Movement(owner, target, speed, hasEnd = true){
 	this.vector = new Vector([...owner.position], target)
     this.move = () => {

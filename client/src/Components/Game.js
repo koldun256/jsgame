@@ -6,8 +6,11 @@ import {socket} from '../util'
 export default function Game(props){
     let [location, setLocation] = useState('wait')
     let [data, setData] = useState()
+	console.log(props)
 	useEffect(() => {
 		socket.on('room start', msg => {
+			console.log('afdbvz')
+			console.log(msg)
 			setData(msg)
 			setLocation('play')
 		})		

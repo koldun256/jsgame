@@ -22,17 +22,6 @@ const defaultSpells = [
 
 export default function Menu(props) {
 	let [name, setName] = useState("");
-	let [error, setError] = useState();
-
-	useEffect(() => {
-		socket.on("response room enter", data => {
-			if (data.status == "success") {
-				props.game(data);
-			} else {
-				setError(data.error);
-			}
-		});
-	}, []);
 
 	return (
 		<div className="menu">
@@ -40,7 +29,6 @@ export default function Menu(props) {
 				value={name}
 				onChange={event => setName(event.target.value)}
 			/>
-			{error && <span>{JSON.stringify(error)}</span>}
 			<Button
 				click={() =>
 					socket.emit("request room enter", {

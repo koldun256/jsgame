@@ -1,5 +1,6 @@
 const Movement = require("./Movement.js");
-module.exports = function GameObject(id, room, position, collider) {
+const {generateID} = require('./util.js')
+module.exports = function GameObject(room, position, collider) {
 	this.movement = null;
 
 	this.id = id;
