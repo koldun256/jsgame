@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createUseStyles } from "react-jss";
-import GameObject from "./GameObject";
+import MovableObject from "./MovableObject.js";
+import StaticObject from "./StaticObject.js";
 import Translator from "../other/translator.js";
 import { socket } from "../util";
 
@@ -16,18 +17,16 @@ const useStyles = createUseStyles({
 
 function Viewport(props) {
 	const classes = useStyles(props),
-		knownObjects = useRef(new Set()),
-		seeingObjects = useRef(new Set()),
+		knownObjects = useRef(new Set(props.startKnowing)),
+		seeingObjects = useRef(new Set(props.startSeeing)),
 		translator = useRef(Translator(props.height, props.width)),
 		[, rerender] = useState();
 	useEffect(() => {
-		function know(object) {
-			knownObject.current.add(object);
-		}
 		function see({ id, position, movement }) {
 			let knownObject = [...knownObjects.current].find(
 				obj => obj.id == id
 			);
+			if(!knownObject) console.error('seeing unknown object')
 			seeingObjects.current.add({
 				__proto__: knownObject,
 				position,
@@ -40,9 +39,10 @@ function Viewport(props) {
 				.find(object => object.id == msg.id)
 				.setMovement(msg);
 		});
-		socket.on("know", msg => known(msg));
+		socket.on("know", msg => knownObject.add(msg));
 		socket.on("see", msg => see(msg));
 	}, []);
+
 	const setTarget = event => {
 		socket.emit(
 			"movement target",
@@ -53,13 +53,23 @@ function Viewport(props) {
 	return (
 		<div className={classes.viewport} onClick={setTarget}>
 			{[...seeingObjects.current].map(object => {
-				return (
-					<GameObject
-						object={object}
-						key={object.id}
-						translator={translator.current}
-					/>
-				);
+				if(object.movement){
+					return (
+						<MovableObject
+							object={object}
+							key={object.id}
+							translator={translator.current}
+						/>
+					);
+				}else {
+					return (
+						<StaticObject
+							object={object}
+							key={object.id}
+							translator={translator.current}
+						/>
+					);
+				}	
 			})}
 		</div>
 	);

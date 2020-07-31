@@ -35,19 +35,20 @@ function Room(roomSetting) {
 		});
 		Collider.update();
 		players.forEach(
-			function (player) {
+			function (protagonist) {
 				let data = {
-					me: player.data("room start to me"),
-					others: player.others.map(other =>
-						other.data("room start to others")
-					),
-					startSeeing: [...player.seeing].map(object =>
+					players: players.map(player => {
+						let data = player.data('know')
+						let isProtagonist = player == protagonist
+						data.me = isProtagonist
+						return data
+					}),
+					seeing: [...protagonist.seeing].map(object =>
 						object.data("see")
 					),
 					viewport: setting["viewport"],
-					movement: Movement.zero().data()
 				};
-				player.send("room start", data);
+				protagonist.send("room start", data);
 			}.bind(this)
 		);
 		Main.broadcast("room start", this.id);
@@ -170,19 +171,18 @@ function Room(roomSetting) {
 
 	this.isWaiting = true;
 
+	//генерация баз и команд
 	setting.modes[roomSetting.mode]["bases positions"].forEach(
 		(basePosition => {
-			//генерация баз и команд
 			let baseObject = {
 				position: basePosition,
 				room: this,
-				id: util.generateID()
+				id: util.generateID(),
 			};
 			(baseObject.data = () => ({
 				type: "base",
 				position: basePosition,
 				id: baseObject.id,
-				type: "base"
 			})),
 				(baseObject.collider = new Collider(
 					baseObject,

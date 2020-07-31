@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import { useMovement } from "../Hooks/useMovement";
 import { createUseStyles } from "react-jss";
-import { useFrame } from "../Hooks/useFrame";
 
 const useStyles = createUseStyles({
 	gameObject: {
@@ -31,21 +29,8 @@ const useStyles = createUseStyles({
 });
 
 export default function GameObject({ object, translator }) {
-	let [movement, setMovement] = useState(object.movement);
-	let [position, step] = useMovement(object.position, movement);
-
-	let viewportPosition = translator.globalToLocal(position);
+	let viewportPosition = translator.globalToLocal(object.position);
 	let classes = useStyles(viewportPosition);
-	useEffect(() => {
-		if (object.type == "player") object.setMovement = setMovement;
-	}, []);
-	useFrame(() => {
-		if (object.type == "player") {
-			step();
-			if (object.me) translator.setCenter(position);
-		}
-	});
-
 	return (
 		<div
 			className={`${classes.gameObject} ${classes[object.type]} ${

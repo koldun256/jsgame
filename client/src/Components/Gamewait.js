@@ -3,7 +3,6 @@ import {socket} from '../util'
 
 export default function Gamewait(props){
     let [players, setPlayers] = useState(props.data.room.waiting)
-    socket.on('room start', data => props.startPlay(data))
 
     return (
         <div>

@@ -8,7 +8,7 @@ export default function Game(props){
     let [data, setData] = useState()
 	useEffect(() => {
 		socket.on('room start', msg => {
-			setData(data)
+			setData(msg)
 			setLocation('play')
 		})		
 	}, [])

@@ -1,5 +1,5 @@
 import {useState} from 'react'
-export function useMovement(startPosition, step, end){
+export function useMovement(startPosition, {step, end}){
     let [position, setPosition] = useState(startPosition)
     let [ended, setEnded] = useState(false)
     let direction = [step[0] > 0 ? 1 : -1, step[1] > 0 ? 1 : -1]

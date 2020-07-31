@@ -1,5 +1,5 @@
 const util = require('./util.js')
-const User = require('./User')
+const User = require('./User.js')
 
 let eventListeners = {}
 module.exports.on = (event, listener) => {

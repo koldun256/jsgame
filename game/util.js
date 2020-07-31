@@ -1,3 +1,6 @@
+Object.prototype.add = function(other){
+	return Object.assign(this, other)
+}
 module.exports.generateID = () =>  Math.random().toString(36).substring(2, 15)
 module.exports.middle = (a, b, c) => {
     if(b < a < c) return a
