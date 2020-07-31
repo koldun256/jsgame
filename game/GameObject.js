@@ -1,17 +1,24 @@
 const Movement = require("./Movement.js");
-module.exports = function GameObject(id, room, position, collider) {
-	this.movement = null;
-
-	this.id = id;
+const Collider = require("./Collider.js");
+const util = require('./util.js')
+module.exports = function GameObject(room, type, position, size, speed) {
+	this.id = util.generateID();
 	this.room = room;
+	this.type = type;
 	this.position = position;
-	this.collider = collider;
+	this.collider = new Collider(this, size, type);
+
+	if(speed) {
+		this.speed = speed
+		this.movement = Movement.zero(this)
+	}
 
 	this.data = function (situation) {
 		switch (situation) {
 			case "know":
 				return {
-					id: this.id
+					id: this.id,
+					type: this.type
 				};
 			case "see":
 				return {
@@ -28,6 +35,7 @@ module.exports = function GameObject(id, room, position, collider) {
 	};
 
 	this.changeMovement = function (movement) {
+		if(!this.movement) throw 'changing movement of static object'
 		this.movement = movement;
 		this.room.events.emit("change movement", this);
 	};
@@ -40,4 +48,9 @@ module.exports = function GameObject(id, room, position, collider) {
 		this.stop();
 		this.position = position;
 	};
+
+	this.setTarget = function (target) {
+		if(!this.movement) throw 'changing movement target of static object'
+		this.changeMovement(new Movement(this, target, this.speed))
+	}
 };

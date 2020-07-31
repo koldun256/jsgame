@@ -1,97 +1,85 @@
 const Movement = require("./Movement.js");
 const Direction = require("./Direction.js");
 const Collider = require("./Collider.js");
-const GameObject = require('./GameObject.js')
-function Player(socket, setting) {
-	this.id = setting.id;
-	this.name = setting.name;
-	this.socket = socket;
-	this.movement = Movement.zero();
-	this.state = "waiting";
-	this.seeing = new Set();
-	this.spells = null;
-	this.room = setting.room;
+const GameObject = require("./GameObject.js");
+function Player(room, position, name, spells, team, socket) {
+	let size = room.settings["player size"];
+	let speed = room.settings["player speed"];
+	let viewportSize = room.settings["viewport"];
+	let startMana = room.settings["start mana"];
+	let maxMana = room.settings["max mana"];
+	let manaRegen = room.settings["mana regen"];
 
-	this.setting = null;
-	socket.on(
-		"movement target",
-		function (target) {
-			this.movement = new Movement(
-				this,
-				new Direction(this.position, target),
-				this.speed,
-				true
-			);
-			for (player of this.room.getGameObjects("type", player)) {
-				player.send();
-			}
-		}.bind(this)
-	);
-	socket.on("cast", function (index) {
-		let spell = this.spells[spell];
-		if (!spell) return socket.emit("unexistent spell");
-		if (spell.mana() > this.mana) return socket.emit("not enough mana"); // reload
+	this.__proto__ = new GameObject(room, "player", position, size, speed);
+	this.name = name;
+	this.socket = socket;
+	this.seeing = new Set();
+	this.spells = spells;
+	this.mana = startMana;
+	this.viewport = new Collider(this, viewportSize, "viewport");
+	this.team = team;
+
+	this.cast = function (spellIndex) {
+		let spell = this.spells[spellIndex];
+		if (!spell) throw "unexistent spell";
+		if (spell.mana() > this.mana) return socket.emit("not enough mana");
 		this.mana -= spell.mana();
 		spell.cast();
-	});
-	this.stop = function () {
-		this.movement = Movement.zero();
 	};
-	this.init = function (setting) {
-		console.log("initing player ", this.name);
-		this.inited = true;
-		this.viewport = new Collider(this, setting.viewport, "viewport");
-		this.collider = new Collider(this, setting.size, "player");
-		this.mana = setting.startMana;
-		this.maxMana = setting.maxMana;
-		this.speed = setting.speed;
-		this.setting = setting;
-		this.color = setting.color;
-		this.state = "active";
-	};
-	this.setPosition = function (newPosition) {
-		console.log("position setting " + newPosition);
-		this.stop();
-		this.position = [...newPosition];
-	};
+
 	this.see = function (object) {
-		this.send(object.data("see"));
+		if (this.seeing.has(object)) throw "see already visible object";
+		this.send("see", object.data("see"));
 		this.seeing.add(object);
 	};
+
+	this.unsee = function (object) {
+		if (!this.seeing.has(object)) throw "unseeing not visible object";
+		this.send("unsee", object.id);
+		this.seeing.delete(object);
+	};
+
 	this.data = function (situation) {
 		switch (situation) {
 			case "see":
-				return {
-					id: this.id,
-					movement: this.movement.data(),
-					position: this.position
-				};
-				break;
-			case "room start":
-				return {
-					id: this.id,
-					color: this.color,
-					name: setting.name,
-					size: this.setting.size,
-					teamID: this.team.id
-				};
-				break;
+				return this.__proto__.data("see");
+			case "know":
+				return this.__proto__.data("know").add({
+					team: this.team.id,
+					name: this.name
+				});
 			case "connect to waiting":
 				return {
 					id: this.id,
 					team: this.team.id,
 					name: this.name
 				};
-				break;
 		}
 	};
+
 	this.addMana = function (mana) {
 		this.mana += mana;
 		if (this.mana >= setting.maxMana) this.mana = setting.maxMana;
 	};
+
 	this.send = (event, message) => {
-		socket.emit(event, message);
+		this.socket.emit(event, message);
 	};
+
+	socket.on("movement target", target => this.setTarget(target));
+	socket.on("cast", spellIndex => this.cast(spellIndex));
+
+	this.viewport.onTouch("all", collider => this.see(collider.owner));
+	this.viewport.onExit("all", collider => this.unsee(collider.owner));
+	
+	this.collider.onTouch('mana zone', () => this.send('mana start'))
+	this.collider.onExit('mana zone', () => this.send('mana end'))
+	this.collider.onStay("mana zone", () => this.addMana(manaRegen));
+
+	this.room.events.on("change movement", object => {
+		if (this.seeing.has(object) || object == this)
+			this.send("change movement", object.id);
+	});
 }
 
 module.exports = Player;
