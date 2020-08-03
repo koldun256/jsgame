@@ -8,7 +8,7 @@ Array.prototype.most = function(getValue){
 		let value = getValue(object)
 		if (value > max) {
 			result = object;
-			minimum = value;
+			max = value;
 		}
 	});
 	return result;
@@ -17,10 +17,8 @@ Array.prototype.remove = function(detectBadElement) {
 	this.splice(this.findIndex(detectBadElement), 1)
 }
 module.exports.generateID = () =>  Math.random().toString(36).substring(2, 15)
-module.exports.middle = (a, b, c) => {
-    if(b < a < c) return a
-    if(a < b < c) return b
-    if(a < c < b) return c
+Array.prototype.middle = function(){
+	return this.sort()[Math.floor(this.length / 2)]	
 }
 module.exports.removeElement = (arr, badElement) => {
     let arrCopy = [...arr]

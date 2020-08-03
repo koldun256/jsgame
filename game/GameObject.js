@@ -31,17 +31,20 @@ module.exports = function GameObject(room, type, position, size, speed) {
 
 	this.move = function () {
 		if (!this.movement) throw "moving static object";
-		this.movement.move();
+		this.movement.move()
 	};
 
 	this.changeMovement = function (movement) {
+		console.log('changing movement')
+		console.log(movement.vector.getStep(movement.speed))
 		if(!this.movement) throw 'changing movement of static object'
 		this.movement = movement;
 		this.room.events.emit("change movement", this);
 	};
 
 	this.stop = function () {
-		this.changeMovement(Movement.zero());
+		console.log('stop')
+		this.changeMovement(Movement.zero(this));
 	};
 
 	this.teleport = function (position) {
@@ -50,7 +53,8 @@ module.exports = function GameObject(room, type, position, size, speed) {
 	};
 
 	this.setTarget = function (target) {
+		console.log('set target')
 		if(!this.movement) throw 'changing movement target of static object'
-		this.changeMovement(new Movement(this, target, this.speed))
+		this.changeMovement(new Movement(this, target, this.speed, false))
 	}
 };

@@ -9,6 +9,8 @@ function Team(room, position){
     this.points = 0
 
     this.full = function(){
+		console.log(this.players.length)
+		console.log(playersCount)
 		return this.players.length == playersCount
 	}
 
@@ -18,6 +20,7 @@ function Team(room, position){
     }
 
     this.add = function(player) {
+		console.log('adding player')
         if(this.players.length <= playersCount){
             this.players.push(player)
         }

@@ -3,7 +3,7 @@ import {socket} from '../util'
 
 export default function Gamewait(props){
 	console.log(props)
-    let [players, setPlayers] = useState(props.data.room.waiting)
+    let [players, setPlayers] = useState(props.data.waiting)
 
     return (
         <div>

@@ -10,34 +10,38 @@ const useStyles = createUseStyles({
 		position: "absolute",
 		border: "1px solid black",
 		overflow: "hidden",
-		width: props => props.width,
-		height: props => props.height
+		width: props => props.width+'px',
+		height: props => props.height+'px'
 	}
 });
 
 function Viewport(props) {
 	const classes = useStyles(props),
 		knownObjects = useRef(new Set(props.startKnowing)),
-		seeingObjects = useRef(new Set(props.startSeeing)),
+		seeingObjects = useRef(new Set()),
 		translator = useRef(Translator(props.height, props.width)),
 		[, rerender] = useState();
+	function see({ id, position, movement }) {
+		if([...seeingObjects.current].some(object => object.id == id))
+			return console.error('seeing seen object')
+		let knownObject = [...knownObjects.current].find(
+			obj => obj.id == id
+		);
+		if(!knownObject) return console.error('seeing unknown object')
+		seeingObjects.current.add({
+			__proto__: knownObject,
+			position,
+			movement
+		});
+		rerender({});
+	}
 	useEffect(() => {
-		function see({ id, position, movement }) {
-			let knownObject = [...knownObjects.current].find(
-				obj => obj.id == id
-			);
-			if(!knownObject) console.error('seeing unknown object')
-			seeingObjects.current.add({
-				__proto__: knownObject,
-				position,
-				movement
-			});
-			rerender();
-		}
-		socket.on("change movement", msg => {
-			[...seeingObjects.current]
-				.find(object => object.id == msg.id)
-				.setMovement(msg);
+		props.startSeeing.forEach(see)
+		socket.on("change movement", ({id, movement}) => {
+			console.log(movement.step)
+			return [...seeingObjects.current]
+				.find(object => object.id == id)
+				.setMovement(movement);
 		});
 		socket.on("know", msg => knownObject.add(msg));
 		socket.on("see", msg => see(msg));
@@ -49,11 +53,12 @@ function Viewport(props) {
 			translator.current.localToGlobal([event.clientX, event.clientY])
 		);
 	};
-
 	return (
 		<div className={classes.viewport} onClick={setTarget}>
 			{[...seeingObjects.current].map(object => {
+				if(object.protagonist) translator.current.setCenter([...object.position])
 				if(object.movement){
+					console.log(object.id)
 					return (
 						<MovableObject
 							object={object}
@@ -62,6 +67,7 @@ function Viewport(props) {
 						/>
 					);
 				}else {
+					console.log(object.id)
 					return (
 						<StaticObject
 							object={object}
@@ -69,7 +75,7 @@ function Viewport(props) {
 							translator={translator.current}
 						/>
 					);
-				}	
+				}
 			})}
 		</div>
 	);

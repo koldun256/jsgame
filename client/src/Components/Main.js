@@ -8,11 +8,11 @@ export default function Main(props){
     let [gameSetting, setGameSetting] = useState()
 	useEffect(() => {
 		socket.on("response room enter", data => {
-			console.log(data)
+			setGameSetting(data)
 			setLocation('game')
 		})
 	}, []);
-
+	console.log(gameSetting)
     if(location == 'menu'){
         return (
             <Menu/>

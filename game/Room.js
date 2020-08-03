@@ -24,7 +24,9 @@ function Room(mode) {
 				teams.find(team => team.id == teamID)
 			);
 		} else {
-			return teams.most(team => -team.players.length);
+			let team = teams.most(team => -team.players.length);
+			console.log(team)
+			return team
 		}
 	};
 
@@ -44,6 +46,7 @@ function Room(mode) {
 		update = Main.on("update", () => this.onFrame());
 		sync = Main.on("sync", () => this.onSync());
 		isWaiting = false;
+		setTimeout(() => {players[1].setTarget([4700, 3200])}, 2000)
 	};
 
 	this.onFrame = function () {
@@ -80,10 +83,12 @@ function Room(mode) {
 		let player = user.createPlayer(name, this, team, spellsData);
 		players.push(player);
 		gameObjects.push(player);
-		player.send("response room enter", () => this.data("connect"));
+		player.send("response room enter", this.data("connect"));
 		this.send("adding to waiting", () => player.data("connect to waiting"));
 
-		if (!teams.includes(team => !team.full()))
+		console.log('team1', teams[0].players.map(player => player.name))
+		console.log('team2', teams[1].players.map(player => player.name))
+		if (!teams.some(team => !team.full()))
 			setTimeout(() => this.start(), 1000);
 	};
 
@@ -112,6 +117,7 @@ function Room(mode) {
 		gameObjects.push(newTeam)
 	})
 	
+	console.log(teams)
 
 	//Collider.generateManaZones(
 	//	this.settings["bases positions"],
