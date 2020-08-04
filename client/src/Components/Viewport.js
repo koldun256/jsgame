@@ -21,6 +21,7 @@ function Viewport(props) {
 		seeingObjects = useRef(new Set()),
 		translator = useRef(Translator(props.height, props.width)),
 		[, rerender] = useState();
+
 	function see({ id, position, movement }) {
 		if([...seeingObjects.current].some(object => object.id == id))
 			return console.error('seeing seen object')
@@ -36,6 +37,11 @@ function Viewport(props) {
 		rerender({});
 	}
 	useEffect(() => {
+		seeingObjects.current.add({
+			type: 'bg',
+			id: 'bg',
+			position: [3000, 3000]
+		})
 		props.startSeeing.forEach(see)
 		socket.on("change movement", ({id, movement}) => {
 			console.log(movement.step)
@@ -53,7 +59,6 @@ function Viewport(props) {
 			translator.current.localToGlobal([event.clientX, event.clientY])
 		);
 	};
-	console.log('rendering viewport with seeing '+[...seeingObjects.current].map(JSON.stringify))
 	return (
 		<div className={classes.viewport} onClick={setTarget}>
 			{[...seeingObjects.current].map(object => {
