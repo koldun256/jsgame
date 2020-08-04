@@ -3,7 +3,6 @@ const Collider = require("./Collider");
 const setting = require("./setting.json");
 const util = require("./util");
 const Main = require("./Main");
-const Movement = require("./Movement");
 const Event = require('./Event.js')
 
 let rooms = [];
@@ -80,10 +79,10 @@ function Room(mode) {
 	this.addPlayer = function (user, name, spellsData, teamID) {
 		let team = this.getTeam(teamID);
 		let player = user.createPlayer(name, this, team, spellsData);
+		this.send("adding to waiting", () => player.data("connect to waiting"));
 		players.push(player);
 		gameObjects.push(player);
 		player.send("response room enter", this.data("connect"));
-		this.send("adding to waiting", () => player.data("connect to waiting"));
 
 		console.log('team1', teams[0].players.map(player => player.name))
 		console.log('team2', teams[1].players.map(player => player.name))
