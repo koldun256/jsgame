@@ -9,7 +9,7 @@ export default function StaticObject({object, translator}) {
 			translator={translator}
 			object={{
 				type: object.type,
-				me: object.me,
+				me: object.protagonist,
 				position: object.position
 			}}
 		/>

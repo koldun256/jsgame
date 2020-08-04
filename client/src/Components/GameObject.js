@@ -1,7 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useMovement } from "../Hooks/useMovement";
+import React from "react";
 import { createUseStyles } from "react-jss";
-import { useFrame } from "../Hooks/useFrame";
 
 const useStyles = createUseStyles({
 	gameObject: {

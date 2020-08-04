@@ -17,7 +17,7 @@ export default function MovableObject({object, translator}) {
 			translator={translator}
 			object={{
 				type: object.type,
-				me: object.me,
+				me: object.protagonist,
 				position: position  
 			}}
 		/>
