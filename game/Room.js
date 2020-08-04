@@ -46,7 +46,6 @@ function Room(mode) {
 		update = Main.on("update", () => this.onFrame());
 		sync = Main.on("sync", () => this.onSync());
 		isWaiting = false;
-		setTimeout(() => {players[1].setTarget([4700, 3200])}, 2000)
 	};
 
 	this.onFrame = function () {

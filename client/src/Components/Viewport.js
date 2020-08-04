@@ -53,6 +53,7 @@ function Viewport(props) {
 			translator.current.localToGlobal([event.clientX, event.clientY])
 		);
 	};
+	console.log('rendering viewport with seeing '+[...seeingObjects.current].map(JSON.stringify))
 	return (
 		<div className={classes.viewport} onClick={setTarget}>
 			{[...seeingObjects.current].map(object => {

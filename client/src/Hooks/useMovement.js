@@ -7,14 +7,14 @@ export function useMovement(startPosition, { step, end }) {
 	return [
 		position,
 		() => {
-			console.log('stepping')
-			if (ended) return setPosition(position);
+			if (ended) return setPosition(end);
 			setPosition([position[0] + step[0], position[1] + step[1]]);
-			if (end)
-				setEnded(
-					position[0] * direction[0] > end[0] &&
-						position[1] * direction[1] > end[1]
-				);
+			if (
+				end &&
+				position[0] * direction[0] > end[0] &&
+				position[1] * direction[1] > end[1]
+			)
+				setEnded(true);
 		}
 	];
 }

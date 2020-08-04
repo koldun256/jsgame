@@ -55,6 +55,6 @@ module.exports = function GameObject(room, type, position, size, speed) {
 	this.setTarget = function (target) {
 		console.log('set target')
 		if(!this.movement) throw 'changing movement target of static object'
-		this.changeMovement(new Movement(this, target, this.speed, false))
+		this.changeMovement(new Movement(this, target, this.speed))
 	}
 };
