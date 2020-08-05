@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { socket } from "../util";
-import Button from "./Button";
+import React, { useState } from "react";
+import { socket } from "Other/util";
+import Button from "Components/Button";
 
 const defaultSpells = [
 	{
@@ -20,7 +20,7 @@ const defaultSpells = [
 	}
 ];
 
-export default function Menu(props) {
+export default function Menu() {
 	let [name, setName] = useState("");
 
 	return (

@@ -1,4 +1,4 @@
-import Viewport from "./Viewport";
+import Viewport from "Components/Viewport";
 import React from 'react'
 
 export default function Gameplay(props) {

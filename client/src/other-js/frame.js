@@ -5,6 +5,6 @@ setInterval(() => {
 	prevActions.forEach(action => action())
 }, 100)
 
-export function useFrame(operation){
+export default function nextFrame(operation){
 	actions.push(operation)
 }

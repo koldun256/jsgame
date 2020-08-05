@@ -1,12 +1,14 @@
 import React from "react";
 import { createUseStyles } from "react-jss";
+import bgImage from "Assets/img/bg.png";
 
 const useStyles = createUseStyles({
 	gameObject: {
 		position: "absolute",
 		transform: "translate(-50%, -50%)",
 		left: position => position[0],
-		top: position => position[1]
+		top: position => position[1],
+		pointerEvents: 'none'
 	},
 	player: {
 		backgroundColor: "red",
@@ -19,7 +21,7 @@ const useStyles = createUseStyles({
 	bg: {
 		width: 6000,
 		height: 6000,
-		backgroundImage: "url(graphic/bg.png)"
+		backgroundImage: `url(${bgImage})`
 	},
 	base: {
 		width: 100,
@@ -27,7 +29,6 @@ const useStyles = createUseStyles({
 		backgroundColor: "grey"
 	}
 });
-
 export default function GameObject({ object, translator }) {
 	let viewportPosition = translator.globalToLocal(object.position);
 	let classes = useStyles(viewportPosition);

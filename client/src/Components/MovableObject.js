@@ -1,24 +1,24 @@
-import GameObject from "./GameObject.js";
-import React, { useRef, useState} from "react";
-import { useMovement } from "../Hooks/useMovement.js";
-import {useFrame} from '../Hooks/useFrame.js'
-export default function MovableObject({object, translator}) {
-	let movement = useRef(object.movement)
-	let [position, step] = useMovement(object.position, movement.current);
+import React, { useRef, useReducer } from "react";
+import GameObject from "Components/GameObject.js";
+import createMovementReducer from "Other/movement.js";
+import nextFrame from "Other/frame.js";
+export default function MovableObject({ object, translator }) {
+	let movementReducer = useRef(createMovementReducer(object.movement));
+	let [position, step] = useReducer(movementReducer.current, object.position);
 	object.setMovement = newMovement => {
-		movement.current = newMovement
-	}
-	useFrame(() => {
-		step()
-		if(object.protagonist) translator.setCenter(position)
-	})
+		movementReducer.current = createMovementReducer(newMovement);
+	};
+	nextFrame(() => {
+		step();
+		if (object.protagonist) translator.setCenter(position);
+	});
 	return (
 		<GameObject
 			translator={translator}
 			object={{
 				type: object.type,
 				me: object.protagonist,
-				position: position  
+				position: position
 			}}
 		/>
 	);

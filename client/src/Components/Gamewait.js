@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react'
-import {socket} from '../util'
+import {socket} from 'Other/util'
 
 export default function Gamewait(props){
 	console.log(props)

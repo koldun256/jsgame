@@ -1,9 +1,10 @@
 import React, {useState, useEffect} from 'react'
-import Menu from './Menu'
-import Game from './Game'
-import {socket} from '../util'
+import ReactDOM from 'react-dom'
+import Menu from 'Components/Menu'
+import Game from 'Components/Game'
+import {socket} from 'Other/util'
 
-export default function Main(props){
+function Main(){
     let [location, setLocation] = useState('menu')
     let [gameSetting, setGameSetting] = useState()
 	useEffect(() => {
@@ -12,7 +13,6 @@ export default function Main(props){
 			setLocation('game')
 		})
 	}, []);
-	console.log(gameSetting)
     if(location == 'menu'){
         return (
             <Menu/>
@@ -23,3 +23,5 @@ export default function Main(props){
         )
     }
 }
+
+ReactDOM.render(<Main />, document.getElementById('root'))

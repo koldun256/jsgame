@@ -1,5 +1,5 @@
 export default function Translator(width, height){
-	let center = null
+	let center = [0,0]
 	return {
 		setCenter(newCenter){
 			center = newCenter

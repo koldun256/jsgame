@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createUseStyles } from "react-jss";
-import MovableObject from "./MovableObject.js";
-import StaticObject from "./StaticObject.js";
-import Translator from "../other/translator.js";
-import { socket } from "../util";
+import MovableObject from "Components/MovableObject.js";
+import StaticObject from "Components/StaticObject.js";
+import Translator from "Other/translator.js";
+import { socket } from "Other/util";
 
 const useStyles = createUseStyles({
 	viewport: {
@@ -15,10 +15,23 @@ const useStyles = createUseStyles({
 	}
 });
 
+const defaultSeeing = [
+	{
+		type: 'bg',
+		id: 'bg',
+		position: [3000, 3000]
+	},
+	{
+		type: 'target',
+		id: 'target',
+		position: [0, 0]
+	}
+]
+
 function Viewport(props) {
 	const classes = useStyles(props),
 		knownObjects = useRef(new Set(props.startKnowing)),
-		seeingObjects = useRef(new Set()),
+		seeingObjects = useRef(new Set(defaultSeeing)),
 		translator = useRef(Translator(props.height, props.width)),
 		[, rerender] = useState();
 
@@ -36,15 +49,11 @@ function Viewport(props) {
 		});
 		rerender({});
 	}
+
 	useEffect(() => {
-		seeingObjects.current.add({
-			type: 'bg',
-			id: 'bg',
-			position: [3000, 3000]
-		})
 		props.startSeeing.forEach(see)
+
 		socket.on("change movement", ({id, movement}) => {
-			console.log(movement.step)
 			return [...seeingObjects.current]
 				.find(object => object.id == id)
 				.setMovement(movement);
@@ -53,11 +62,15 @@ function Viewport(props) {
 		socket.on("see", msg => see(msg));
 	}, []);
 
-	const setTarget = event => {
-		socket.emit(
-			"movement target",
-			translator.current.localToGlobal([event.clientX, event.clientY])
-		);
+	const setTarget = e => {
+		let rect = e.target.getBoundingClientRect();
+		let viewportPosition = [e.clientX - rect.left, e.clientY - rect.top]
+		console.log(viewportPosition)
+		console.log(rect)
+		console.log(e.clientX, e.clientY)
+		let globalPosition = translator.current.localToGlobal(viewportPosition)
+		console.log(globalPosition)
+		socket.emit("movement target", globalPosition);
 	};
 	return (
 		<div className={classes.viewport} onClick={setTarget}>

@@ -1,10 +1,11 @@
-import GameObject from "./GameObject.js";
 import React, { useState } from "react";
-import {useFrame} from '../Hooks/useFrame.js'
-export default function StaticObject({object, translator}) {
-	console.log(object)
-	let [, rerender] = useState()
-	useFrame(() => rerender({}))
+import GameObject from "Components/GameObject.js";
+import nextFrame from "Other/frame.js";
+
+export default function StaticObject({ object, translator }) {
+	let [, rerender] = useState();
+	nextFrame(() => rerender({}));
+
 	return (
 		<GameObject
 			translator={translator}
