@@ -65,12 +65,11 @@ function Viewport(props) {
 	const setTarget = e => {
 		let rect = e.target.getBoundingClientRect();
 		let viewportPosition = [e.clientX - rect.left, e.clientY - rect.top]
-		console.log(viewportPosition)
-		console.log(rect)
-		console.log(e.clientX, e.clientY)
 		let globalPosition = translator.current.localToGlobal(viewportPosition)
-		console.log(globalPosition)
 		socket.emit("movement target", globalPosition);
+		[...seeingObjects.current]
+			.find(object => object.id == 'target')
+			.position = globalPosition
 	};
 	return (
 		<div className={classes.viewport} onClick={setTarget}>

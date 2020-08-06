@@ -27,6 +27,11 @@ const useStyles = createUseStyles({
 		width: 100,
 		height: 100,
 		backgroundColor: "grey"
+	},
+	target: {
+		width: 20,
+		height: 20 ,
+		border: '2px solid red'
 	}
 });
 export default function GameObject({ object, translator }) {
