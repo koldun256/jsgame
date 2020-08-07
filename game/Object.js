@@ -30,7 +30,7 @@ module.exports = function GameObject(room, position, collider) {
 
 	this.changeMovement = function (movement) {
 		this.movement = movement;
-		this.room.events.emit("change movement", this);
+		this.room.eventSystem.emit("change movement", this);
 	};
 
 	this.stop = function () {

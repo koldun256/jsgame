@@ -39,7 +39,7 @@ module.exports = function GameObject(room, type, position, size, speed) {
 		console.log(movement.vector.getStep(movement.speed))
 		if(!this.movement) throw 'changing movement of static object'
 		this.movement = movement;
-		this.room.events.emit("change movement", this);
+		this.room.eventSystem.emit("change movement", this);
 	};
 
 	this.stop = function () {

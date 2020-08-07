@@ -1,4 +1,4 @@
-module.exports = function Event() {
+module.exports = function EventSystem() {
 	let listeners = [];
 	this.on = (event, callback) => listeners.push({ event, callback });
 	this.emit = (event, data) =>

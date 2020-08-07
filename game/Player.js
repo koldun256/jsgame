@@ -84,7 +84,7 @@ function Player(socket, name, room, team, spellsData) {
 	//this.collider.onExit('mana zone', () => this.send('mana end'))
 	//this.collider.onStay("mana zone", () => this.addMana(manaRegen));
 
-	this.room.events.on("change movement", object => {
+	this.room.eventSystem.on("change movement", object => {
 		if (this.seeing.has(object) || object == this)
 			this.send("change movement", {
 				id: object.id,

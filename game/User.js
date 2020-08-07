@@ -1,8 +1,5 @@
-const util = require('./util')
 const Player = require('./Player')
-const Spell = require('./Spell')
-const Room = require('./Room')
-const setting = require('./setting.json')
+const Main = require('./Main')
 
 function User(socket){
 	this.createPlayer = function(name, room, team, spellsData){
@@ -10,12 +7,11 @@ function User(socket){
 	}
 	socket.on('request room enter', data => {
         try {
-            let room = Room.random()
+            let room = Main.roomManager.get(data.roomID)
             room.addPlayer(this, data.name, data.spells, data.team)
         }catch(e) {
             console.log(e.stack)
         }
-
     })
 }
 

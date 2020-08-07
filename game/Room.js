@@ -2,10 +2,10 @@ const Team = require("./Team");
 const Collider = require("./Collider");
 const setting = require("./setting.json");
 const util = require("./util");
-const Main = require("./Main");
-const Event = require('./Event.js')
+const Main = require("./Main.js");
+console.log(Main)
+const EventSystem = require('./EventSystem')
 
-let rooms = [];
 function Room(mode) {
 	let update, sync;
 	let gameObjects = [];
@@ -13,7 +13,7 @@ function Room(mode) {
 	let players = [];
 
 	this.settings = setting.modes[mode];
-	this.events = new Event()
+	this.eventSystem = new EventSystem()
 	this.id = util.generateID();
 	this.isWaiting = true;
 
@@ -41,9 +41,10 @@ function Room(mode) {
 				)
 			});
 		});
-		Main.broadcast("room start", this.id);
-		update = Main.on("update", () => this.onFrame());
-		sync = Main.on("sync", () => this.onSync());
+		console.log(Main)
+		Main.eventSystem.emit("room start", this.id);
+		update = Main.eventSystem.on("update", () => this.onFrame());
+		sync = Main.eventSystem.on("sync", () => this.onSync());
 		isWaiting = false;
 	};
 
@@ -123,12 +124,6 @@ function Room(mode) {
 	//	this.settings["mana zone width"],
 	//	this
 	//);
-	rooms.push(this);
 }
-new Room("DM");
-Room.getRooms = () => [...rooms];
-Room.getRoomByID = id => {
-	for (let room of rooms) if (room.id == id) return room;
-};
-Room.random = () => rooms[Math.floor(Math.random() * rooms.length)];
+
 module.exports = Room;
