@@ -1,101 +1,101 @@
-import Collider from "./Collider.mjs"
-import GameObject from "./GameObject.mjs"
-import Spell from "./Spell.mjs"
+import Collider from './Collider.mjs'
+import GameObject from './GameObject.mjs'
+import Spell from './Spell.mjs'
 
-function Player(socket, name, room, team, spellsData) {
-	let size = room.settings["player size"];
-	let speed = room.settings["player speed"];
-	let viewportSize = room.settings["viewport"];
-	let startMana = room.settings["start mana"];
-	let maxMana = room.settings["max mana"];
-	let manaRegen = room.settings["mana regen"];
+class Player extends GameObject {
+	constructor(socket, name, room, team, spellsData) {
+		let size = room.settings['player size']
+		let speed = room.settings['player speed']
+		let viewportSize = room.settings['viewport']
+		let startMana = room.settings['start mana']
 
-	this.__proto__ = new GameObject(
-		room,
-		"player",
-		[...team.position],
-		size,
-		speed
-	);
-	this.name = name;
-	this.socket = socket;
-	this.seeing = new Set();
-	this.spells = spellsData.map(spellData => new Spell(this, spellData));
-	this.mana = startMana;
-	this.viewport = new Collider(
-		this,
-		viewportSize,
-		"viewport",
-		room.collisionSystem
-	);
-	this.team = team;
+		super(room, 'player', [...team.position], size, speed)
 
-	this.cast = function (spellIndex) {
-		let spell = this.spells[spellIndex];
-		if (!spell) throw "unexistent spell";
-		if (spell.mana() > this.mana) return socket.emit("not enough mana");
-		this.mana -= spell.mana();
-		spell.cast();
-	};
+		this.name = name
+		this.socket = socket
+		this.seeing = new Set()
+		this.spells = spellsData.map(spellData => new Spell(this, spellData))
+		this.mana = startMana
+		this.viewport = new Collider(
+			this,
+			viewportSize,
+			'viewport',
+			room.collisionSystem
+		)
+		this.team = team
+		this.setting = this.room.settings
 
-	this.see = function (object) {
-		if (this.seeing.has(object)) throw "see already visible object";
-		this.send("see", object.data("see"));
-		this.seeing.add(object);
-	};
+		team.add(this)
 
-	this.unsee = function (object) {
-		if (!this.seeing.has(object)) throw "unseeing not visible object";
-		this.send("unsee", object.id);
-		this.seeing.delete(object);
-	};
+		this.room.eventSystem.on('change movement', object => {
+			if (this.seeing.has(object) || object == this)
+				this.send('change movement', {
+					id: object.id,
+					movement: object.movement.data(),
+				})
+		})
 
-	this.data = function (situation) {
+		socket.on('movement target', target => this.setTarget(target))
+		socket.on('cast', spellIndex => this.cast(spellIndex))
+
+		this.viewport.onEnter('all', object => this.see(object))
+		this.viewport.onExit('all', object => this.unsee(object))
+
+		//this.collider.onTouch('mana zone', () => this.send('mana start'))
+		//this.collider.onExit('mana zone', () => this.send('mana end'))
+		//this.collider.onStay("mana zone", () => this.addMana(manaRegen));
+	}
+
+	cast(spellIndex) {
+		let spell = this.spells[spellIndex]
+		if (!spell) throw 'unexistent spell'
+		if (spell.mana() > this.mana) return this.send('not enough mana')
+		this.mana -= spell.mana()
+		spell.cast()
+	}
+
+	see(object) {
+		console.log(object.id);
+		//if (this.seeing.has(object)) throw 'see already visible object'
+		this.send('see', object.data('see'))
+		this.seeing.add(object)
+	}
+
+	unsee(object) {
+		if (!this.seeing.has(object)) throw 'unseeing not visible object'
+		this.send('unsee', object.id)
+		this.seeing.delete(object)
+	}
+
+	data(situation) {
 		switch (situation) {
-			case "see":
-				return this.__proto__.data("see");
-			case "know":
-				return this.__proto__.data("know").add({
+			case 'see':
+				return super.data('see')
+			case 'know':
+				return super.data('know').add({
 					team: this.team.id,
-					name: this.name
-				});
-			case "connect to waiting":
+					name: this.name,
+				})
+			case 'connect to waiting':
 				return {
 					id: this.id,
 					team: this.team.id,
-					name: this.name
-				};
+					name: this.name,
+				}
+			default:
+				return {}
 		}
-	};
+	}
 
-	this.addMana = function (mana) {
-		this.mana += mana;
-		if (this.mana >= setting.maxMana) this.mana = setting.maxMana;
-	};
+	addMana(mana) {
+		this.mana += mana
+		if (this.mana >= this.setting['max mana'])
+			this.mana = this.setting['max mana']
+	}
 
-	this.send = (event, message) => {
-		this.socket.emit(event, message);
-	};
-
-	team.add(this);
-
-	socket.on("movement target", target => this.setTarget(target));
-	socket.on("cast", spellIndex => this.cast(spellIndex));
-
-	this.viewport.onEnter("all", object => this.see(object));
-	this.viewport.onExit("all", object => this.unsee(object));
-
-	//this.collider.onTouch('mana zone', () => this.send('mana start'))
-	//this.collider.onExit('mana zone', () => this.send('mana end'))
-	//this.collider.onStay("mana zone", () => this.addMana(manaRegen));
-
-	this.room.eventSystem.on("change movement", object => {
-		if (this.seeing.has(object) || object == this)
-			this.send("change movement", {
-				id: object.id,
-				movement: object.movement.data()
-			});
-	});
+	send(event, message) {
+		this.socket.emit(event, message)
+	}
 }
 
-export default Player;
+export default Player

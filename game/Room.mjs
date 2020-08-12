@@ -1,125 +1,114 @@
-import Team from "./Team"
-import setting from "./setting.json"
-import * as util from "./util"
-import * as Main from "./Main.mjs"
+import Team from './Team'
+import setting from './setting.json'
+import * as util from './util'
+import * as Main from './Main.mjs'
 import EventSystem from './EventSystem'
 import CollisionSystem from './CollisionSystem'
+class Room {
+	constructor(mode) {
+		this.gameObjects = []
+		this.teams = []
+		this.players = []
+		this.settings = setting.modes[mode]
+		this.eventSystem = new EventSystem()
+		this.collisionSystem = new CollisionSystem()
+		this.id = util.generateID()
 
-function Room(mode) {
-	let update, sync;
-	let gameObjects = [];
-	let teams = [];
-	let players = [];
+		//генерация баз и команд
+		this.settings['bases positions'].forEach((basePosition) => {
+			let newTeam = new Team(this, basePosition)
+			this.teams.push(newTeam)
+			this.gameObjects.push(newTeam)
+		})
+	}
 
-	this.settings = setting.modes[mode];
-	this.eventSystem = new EventSystem()
-	this.collisionSystem = new CollisionSystem()
-	this.id = util.generateID();
-	this.isWaiting = true;
-
-	this.getTeam = function (teamID) {
+	getTeam(teamID) {
 		if (teamID) {
-			return teams.find(team => team.id == teamID)
+			return this.teams.find((team) => team.id == teamID)
 		} else {
-			let team = teams.most(team => -team.players.length);
-			console.log(team)
+			let team = this.teams.most((team) => -team.players.length)
 			return team
 		}
-	};
+	}
 
-	this.start = function () {
-		this.collisionSystem.update();
-		players.forEach(protagonist => {
-			protagonist.send("room start", {
-				knowing: gameObjects.map(gm =>
-					gm.data("know").add({ protagonist: gm == protagonist })
+	start() {
+		this.collisionSystem.update()
+		this.players.forEach((protagonist) => {
+			protagonist.send('room start', {
+				knowing: this.gameObjects.map((gm) =>
+					gm.data('know').add({ protagonist: gm == protagonist })
 				),
-				seeing: [...protagonist.seeing].map(object =>
-					object.data("see")
-				)
-			});
-		});
-		Main.eventSystem.emit("room start", this.id);
-		update = Main.eventSystem.on("update", () => this.onFrame());
-		sync = Main.eventSystem.on("sync", () => this.onSync());
-	};
+				seeing: [...protagonist.seeing].map((object) =>
+					object.data('see')
+				),
+			})
+		})
+		Main.eventSystem.emit('room start', this.id)
+		Main.eventSystem.on('update', () => this.onFrame())
+		Main.eventSystem.on('sync', () => this.onSync())
+	}
 
-	this.onFrame = function () {
-		gameObjects
-			.filter(gm => "lifetime" in gm)
-			.forEach(gm => {
-				gm.lifetime--;
+	onFrame() {
+		this.gameObjects
+			.filter((gm) => 'lifetime' in gm)
+			.forEach((gm) => {
+				gm.lifetime--
 				if (!gm.lifetime)
-					gameObjects.splice(gameObjects.indexOf(gm), 1);
-			});
-		gameObjects.filter(gm => "movement" in gm).forEach(gm => gm.move());
-		this.collisionSystem.update();
-	};
+					this.gameObjects.splice(this.gameObjects.indexOf(gm), 1)
+			})
+		this.gameObjects
+			.filter((gm) => 'movement' in gm)
+			.forEach((gm) => gm.move())
+		this.collisionSystem.update()
+	}
 
-	this.onSync = function () {
-		this.send("sync", player => player.data("sync"));
-	};
+	onSync() {
+		this.send('sync', (player) => player.data('sync'))
+	}
 
-	this.end = function (endData) {
-		update.end();
-		sync.end();
-		Main.broadcast("room end", this.id);
-		this.send("end", function (player) {
-			return this.data("end", endData);
-		});
-	};
+	end(endData) {
+		Main.broadcast('room end', this.id)
+		this.send('end', () => this.data('end', endData))
+	}
 
-	this.send = function (msg, genContent) {
-		players.forEach(player => player.send(msg, genContent(player)));
-	};
+	send(msg, genContent) {
+		this.players.forEach((player) => player.send(msg, genContent(player)))
+	}
 
-	this.addPlayer = function (user, name, spellsData, teamID) {
-		let team = this.getTeam(teamID);
-		let player = user.createPlayer(name, this, team, spellsData);
-		this.send("adding to waiting", () => player.data("connect to waiting"));
-		players.push(player);
-		gameObjects.push(player);
-		player.send("response room enter", this.data("connect"));
+	addPlayer(user, name, spellsData, teamID) {
+		let team = this.getTeam(teamID)
+		let player = user.createPlayer(name, this, team, spellsData)
+		this.send('adding to waiting', () => player.data('connect to waiting'))
+		this.players.push(player)
+		this.gameObjects.push(player)
+		player.send('response room enter', this.data('connect'))
 
-		console.log('team1', teams[0].players.map(player => player.name))
-		console.log('team2', teams[1].players.map(player => player.name))
-		if (!teams.some(team => !team.full()))
-			setTimeout(() => this.start(), 1000);
-	};
+		if (!this.teams.some((team) => !team.full()))
+			setTimeout(() => this.start(), 1000)
+	}
 
-	this.data = function (situation, params) {
+	data(situation, params) {
 		switch (situation) {
-			case "end":
+			case 'end':
 				return {
-					winner: params.winner.id
-				};
-				break;
-			case "connect":
-				let data = {
-					waiting: players.map(player =>
-						player.data("connect to waiting")
+					winner: params.winner.id,
+				}
+			case 'connect':
+				return {
+					waiting: this.players.map((player) =>
+						player.data('connect to waiting')
 					),
-					id: this.id
-				};
-				return data;
+					id: this.id,
+				}
 		}
-	};
-
-	//генерация баз и команд
-	this.settings["bases positions"].forEach(basePosition => {
-		let newTeam = new Team(this, basePosition)	
-		teams.push(newTeam);
-		gameObjects.push(newTeam)
-	})
-	
-	console.log(teams)
+	}
 
 	//Collider.generateManaZones(
-	//	this.settings["bases positions"],
-	//	this.settings["mana zone distance"],
-	//	this.settings["mana zone width"],
-	//	this
+		//this.settings["bases positions"],
+		//this.settings["mana zone distance"],
+		//this.settings["mana zone width"],
+		//this
 	//);
 }
 
-export default Room;
+export default Room

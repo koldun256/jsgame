@@ -20,9 +20,6 @@ class CollisionListener {
 		let isTouching = this.collider.isTouching(collider);
 		let wasTouching = this.touching.has(collider);
 
-		console.log(isTouching)
-		console.log(wasTouching)
-
 		if (!isTouching) this.touching.delete(collider)
 		if (isTouching) this.touching.add(collider);
 
