@@ -1,4 +1,4 @@
-module.exports = {
+export default {
     name: 'Заморозка',
 
     defenishion: 'Игрок на несколько секунд тепряет возможность что-либо делать',

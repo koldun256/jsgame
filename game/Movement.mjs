@@ -1,4 +1,4 @@
-const Vector = require('./Vector.js')
+import Vector from './Vector.mjs'
 function Movement(owner, target, speed, hasEnd = true){
 	this.speed = speed
 	this.vector = new Vector([...owner.position], target)
@@ -19,4 +19,4 @@ function Movement(owner, target, speed, hasEnd = true){
 Movement.zero = owner => {
     return new Movement(owner, owner.position, 0, false)
 }
-module.exports = Movement
+export default Movement

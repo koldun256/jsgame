@@ -16,11 +16,11 @@ Array.prototype.most = function(getValue){
 Array.prototype.remove = function(detectBadElement) {
 	this.splice(this.findIndex(detectBadElement), 1)
 }
-module.exports.generateID = () =>  Math.random().toString(36).substring(2, 15)
 Array.prototype.middle = function(){
 	return this.sort()[Math.floor(this.length / 2)]	
 }
-module.exports.removeElement = (arr, badElement) => {
+export const generateID = () =>  Math.random().toString(36).substring(2, 15)
+export const removeElement = (arr, badElement) => {
     let arrCopy = [...arr]
     arrCopy.forEach((element, index) => {
         if(element == badElement)arrCopy.splice(index, 1)

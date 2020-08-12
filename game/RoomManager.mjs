@@ -1,4 +1,4 @@
-const Room = require('./Room')
+import Room from './Room'
 
 class RoomManager {
 	constructor(defaultMode){
@@ -23,4 +23,4 @@ class RoomManager {
 	}
 }
 
-module.exports = RoomManager
+export default RoomManager

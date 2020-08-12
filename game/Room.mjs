@@ -1,8 +1,7 @@
 import Team from "./Team"
-import Collider from "./Collider"
 import setting from "./setting.json"
 import * as util from "./util"
-import Main from "./Main.mjs"
+import * as Main from "./Main.mjs"
 import EventSystem from './EventSystem'
 import CollisionSystem from './CollisionSystem'
 
@@ -43,7 +42,6 @@ function Room(mode) {
 		Main.eventSystem.emit("room start", this.id);
 		update = Main.eventSystem.on("update", () => this.onFrame());
 		sync = Main.eventSystem.on("sync", () => this.onSync());
-		isWaiting = false;
 	};
 
 	this.onFrame = function () {

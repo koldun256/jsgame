@@ -1,5 +1,5 @@
-const setting = require('../setting.json')
-module.exports = {
+import setting from '../setting.json'
+export default {
     name: 'Стан',
 
     defenition: 'Игрок на несколько секунд теряет возможность что-либо делать, после чего телепортируется на базу',

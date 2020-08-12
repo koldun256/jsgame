@@ -1,4 +1,4 @@
-const GameObject = require('./GameObject.js')
+import GameObject from './GameObject.mjs'
 function Team(room, position){
 	let size = room.settings['base size']
 	let playersCount = room.settings['players in team']
@@ -26,4 +26,4 @@ function Team(room, position){
         }
     }
 }
-module.exports = Team
+export default Team

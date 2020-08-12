@@ -4,7 +4,6 @@ import MovableObject from "Components/MovableObject.js";
 import StaticObject from "Components/StaticObject.js";
 import Translator from "Other/translator.js";
 import { socket } from "Other/util";
-
 const useStyles = createUseStyles({
 	viewport: {
 		position: "absolute",
@@ -29,6 +28,7 @@ const defaultSeeing = [
 ]
 
 function Viewport(props) {
+
 	const classes = useStyles(props),
 		knownObjects = useRef(new Set(props.startKnowing)),
 		seeingObjects = useRef(new Set(defaultSeeing)),
@@ -59,7 +59,7 @@ function Viewport(props) {
 				.setMovement(movement);
 		});
 		socket.on("know", msg => knownObject.add(msg));
-		socket.on("see", msg => see(msg));
+		socket.on("see", msg => see(msg));   
 	}, []);
 
 	const setTarget = e => {

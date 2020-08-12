@@ -16,7 +16,7 @@ const useStyles = createUseStyles({
 		height: 50
 	},
 	me: {
-		backgroundColor: "blue"
+		backgroundColor: "#0000FF"
 	},
 	bg: {
 		width: 6000,

@@ -1,5 +1,5 @@
-const Player = require('./Player')
-const Main = require('./Main')
+import Player from './Player'
+import * as Main from './Main'
 
 function User(socket){
 	this.createPlayer = function(name, room, team, spellsData){
@@ -15,4 +15,4 @@ function User(socket){
     })
 }
 
-module.exports = User
+export default User

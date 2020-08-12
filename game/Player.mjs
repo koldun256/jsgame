@@ -1,6 +1,6 @@
-const Collider = require("./Collider.js");
-const GameObject = require("./GameObject.js");
-const Spell = require("./Spell.js");
+import Collider from "./Collider.mjs"
+import GameObject from "./GameObject.mjs"
+import Spell from "./Spell.mjs"
 
 function Player(socket, name, room, team, spellsData) {
 	let size = room.settings["player size"];
@@ -22,7 +22,12 @@ function Player(socket, name, room, team, spellsData) {
 	this.seeing = new Set();
 	this.spells = spellsData.map(spellData => new Spell(this, spellData));
 	this.mana = startMana;
-	this.viewport = new Collider(this, viewportSize, "viewport");
+	this.viewport = new Collider(
+		this,
+		viewportSize,
+		"viewport",
+		room.collisionSystem
+	);
 	this.team = team;
 
 	this.cast = function (spellIndex) {
@@ -77,7 +82,7 @@ function Player(socket, name, room, team, spellsData) {
 	socket.on("movement target", target => this.setTarget(target));
 	socket.on("cast", spellIndex => this.cast(spellIndex));
 
-	this.viewport.onTouch("all", object => this.see(object));
+	this.viewport.onEnter("all", object => this.see(object));
 	this.viewport.onExit("all", object => this.unsee(object));
 
 	//this.collider.onTouch('mana zone', () => this.send('mana start'))
@@ -93,4 +98,4 @@ function Player(socket, name, room, team, spellsData) {
 	});
 }
 
-module.exports = Player;
+export default Player;
