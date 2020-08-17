@@ -1,10 +1,11 @@
-let actions = []
-setInterval(() => {
-	let prevActions = [...actions]
-	actions = []
-	prevActions.forEach(action => action())
-}, 100)
+const frameDelay = 100
+let actions = new Set()
 
-export default function nextFrame(operation){
-	actions.push(operation)
+setInterval(() => {
+	[...actions].forEach(action => action())
+}, frameDelay)
+
+export default function eachFrame(operation){
+	actions.add(operation)
+	return () => actions.delete(operation)
 }

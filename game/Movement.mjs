@@ -12,7 +12,7 @@ function Movement(owner, target, speed, hasEnd = true){
 		}
     }
     this.data = () => ({
-        step: this.vector.getStep(speed),
+		step: this.vector.getStep(speed),
 		end: hasEnd ? target : null
     })
 }

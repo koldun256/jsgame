@@ -1,10 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import GameObject from "Components/GameObject.js";
-import nextFrame from "Other/frame.js";
+import eachFrame from "Other/frame.js";
 
 export default function StaticObject({ object, translator }) {
 	let [, rerender] = useState();
-	nextFrame(() => rerender({}));
+
+	useEffect(() => {
+		let clearFrames = eachFrame(() => rerender({}))
+		return clearFrames
+	}, [])
 
 	return (
 		<GameObject

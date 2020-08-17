@@ -1,15 +1,30 @@
-export default function createMovementReducer({ step, end }) {
-	let ended = false;
-	let direction = [step[0] > 0 ? 1 : -1, step[1] > 0 ? 1 : -1];
+export default movementData => {
+	//throw new Error('ads')
+	
+	console.log('creating movement');
+	let direction = [
+		movementData.step[0] >= 0 ? 1 : -1,
+		movementData.step[1] >= 0 ? 1 : -1,
+	]
 
-	return position => {
-		if (ended) return end;
+	return (position, action) => {
+		console.log(position, action);
+		if (action == 'end') {
+			return movementData.end || position
+		}
+
+		let newPosition = [
+			position[0] + movementData.step[0],
+			position[1] + movementData.step[1],
+		]
+
 		if (
-			end &&
-			position[0] * direction[0] > end[0] &&
-			position[1] * direction[1] > end[1]
-		)
-			ended = true;
-		return [position[0] + step[0], position[1] + step[1]];
-	};
+			movementData.end &&
+			newPosition[0] * direction[0] >=
+				movementData.end[0] * direction[0] &&
+			newPosition[1] * direction[1] >= movementData.end[1] * direction[1]
+		) return movementData.end || position
+
+		return newPosition
+	}
 }

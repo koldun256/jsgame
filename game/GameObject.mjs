@@ -17,7 +17,6 @@ class GameObject {
 	}
 
 	data(situation) {
-		console.log('something')
 		switch (situation) {
 			case 'know':
 				return {

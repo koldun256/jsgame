@@ -1,26 +1,45 @@
-import React, { useRef, useReducer } from "react";
-import GameObject from "Components/GameObject.js";
-import createMovementReducer from "Other/movement.js";
-import nextFrame from "Other/frame.js";
+import React, { useRef, useReducer, useEffect, useState } from 'react'
+import GameObject from 'Components/GameObject.js'
+import eachFrame from 'Other/frame.js'
+import { socket } from 'Other/util.js'
+import createMovement from 'Other/movement';
 
 export default function MovableObject({ object, translator }) {
-	let movementReducer = useRef(createMovementReducer(object.movement));
-	let [position, step] = useReducer(movementReducer.current, object.position);
-	object.setMovement = newMovement => {
-		movementReducer.current = createMovementReducer(newMovement);
-	};
-	nextFrame(() => {
-		step();
-		if (object.protagonist) translator.setCenter(position);
-	});
+	const [movement, setMovement] = useState(
+		() => createMovement(object.movement)
+	)
+	let [position, move] = useReducer(movement, object.position)
+	let mutablePosition = useRef()
+	mutablePosition.current = position
+	useEffect(() => {
+		let movementChangeListener = ({id, movement}) => {
+			if(object.id == id) {
+				move('end')
+				setMovement(() => createMovement(movement))
+			}
+		}
+		socket.on('change movement', movementChangeListener)
+
+		let clearFrame = eachFrame(() => {
+			move('step')
+			console.log('frame', object);
+			if(object.protagonist) translator.setCenter(mutablePosition.current)
+		})
+
+		return () => {
+			socket.off('change movement', movementChangeListener)
+			clearFrame()
+		}
+	}, [])
+	
 	return (
 		<GameObject
 			translator={translator}
 			object={{
 				type: object.type,
 				me: object.protagonist,
-				position: position
+				position: position,
 			}}
 		/>
-	);
+	)
 }

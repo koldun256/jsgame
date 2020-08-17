@@ -6,7 +6,7 @@ export default function Translator(width, height){
 		},
 		localToGlobal(local){
 			return [
-				local[0] + center[0] - height / 2,				
+				local[0] + center[0] - height / 2,
 				local[1] + center[1] - width/ 2,
 			]
 		},

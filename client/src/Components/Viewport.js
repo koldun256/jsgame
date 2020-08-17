@@ -3,7 +3,7 @@ import { createUseStyles } from "react-jss";
 import MovableObject from "Components/MovableObject.js";
 import StaticObject from "Components/StaticObject.js";
 import Translator from "Other/translator.js";
-import { socket } from "Other/util";
+import { socket } from "Other/util.js";
 const useStyles = createUseStyles({
 	viewport: {
 		position: "absolute",
@@ -36,6 +36,7 @@ function Viewport(props) {
 		[, rerender] = useState();
 
 	function see({ id, position, movement }) {
+
 		if([...seeingObjects.current].some(object => object.id == id))
 			return console.error('seeing seen object')
 		let knownObject = [...knownObjects.current].find(
@@ -53,11 +54,6 @@ function Viewport(props) {
 	useEffect(() => {
 		props.startSeeing.forEach(see)
 
-		socket.on("change movement", ({id, movement}) => {
-			return [...seeingObjects.current]
-				.find(object => object.id == id)
-				.setMovement(movement);
-		});
 		socket.on("know", msg => knownObject.add(msg));
 		socket.on("see", msg => see(msg));   
 	}, []);
@@ -76,7 +72,6 @@ function Viewport(props) {
 			{[...seeingObjects.current].map(object => {
 				if(object.protagonist) translator.current.setCenter([...object.position])
 				if(object.movement){
-					console.log(object.id)
 					return (
 						<MovableObject
 							object={object}
@@ -85,7 +80,6 @@ function Viewport(props) {
 						/>
 					);
 				}else {
-					console.log(object.id)
 					return (
 						<StaticObject
 							object={object}
