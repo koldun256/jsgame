@@ -1,20 +1,25 @@
-export default function Translator(width, height){
-	let center = [0,0]
+export default function Translator(viewportSize, serverViewportSize) {
+	let center = [0, 0]
+	let sizeKoefficient = viewportSize / serverViewportSize
+	console.log(viewportSize);
 	return {
-		setCenter(newCenter){
+		setCenter(newCenter) {
 			center = newCenter
 		},
-		localToGlobal(local){
+		localToGlobal(local) {
 			return [
-				local[0] + center[0] - height / 2,
-				local[1] + center[1] - width/ 2,
+				((local[0] - viewportSize / 2) / sizeKoefficient) + center[0],
+				((local[1] - viewportSize / 2) / sizeKoefficient) + center[1]
 			]
 		},
-		globalToLocal(global){
+		globalToLocal(global) {
 			return [
-				global[0] - center[0] + height / 2, 
-				global[1] - center[1] + width / 2
+				((global[0] - center[0]) * sizeKoefficient) + viewportSize / 2,
+				((global[1] - center[1]) * sizeKoefficient) + viewportSize / 2
 			]
-		}
+		},
+		getSize(originalSize) {
+			return originalSize * sizeKoefficient;
+		},
 	}
 }

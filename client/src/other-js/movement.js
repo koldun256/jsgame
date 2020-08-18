@@ -8,7 +8,6 @@ export default movementData => {
 	]
 
 	return (position, action) => {
-		console.log(position, action);
 		if (action == 'end') {
 			return movementData.end || position
 		}

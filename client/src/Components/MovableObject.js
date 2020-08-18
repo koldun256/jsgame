@@ -22,7 +22,6 @@ export default function MovableObject({ object, translator }) {
 
 		let clearFrame = eachFrame(() => {
 			move('step')
-			console.log('frame', object);
 			if(object.protagonist) translator.setCenter(mutablePosition.current)
 		})
 

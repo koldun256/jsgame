@@ -8,8 +8,7 @@ export default function Gameplay(props) {
 			<Viewport
 				startSeeing={props.data.seeing}
 				startKnowing={props.data.knowing}
-				width="900"
-				height="900"
+				size={900}
 			/>
 		</div>
 	);
