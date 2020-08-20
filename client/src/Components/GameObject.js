@@ -1,6 +1,7 @@
-import React from "react";
+import React, {useContext} from "react";
 import { createUseStyles } from "react-jss";
 import bgImage from "Assets/img/bg.png";
+import {TranslatorContext} from "Components/Viewport";
 
 const useStyles = createUseStyles({
 	gameObject: {
@@ -35,7 +36,8 @@ const useStyles = createUseStyles({
 	})
 });
 
-export default function GameObject({ object, translator }) {
+export default function GameObject({ object }) {
+	let translator = useContext(TranslatorContext)
 	let viewportPosition = translator.globalToLocal(object.position);
 	let classes = useStyles({position: viewportPosition, translator});
 	return (

@@ -1,9 +1,16 @@
-import React, { useState, useEffect, useRef, useMemo, useContext } from 'react'
+import React, {
+	useState,
+	useEffect,
+	useRef,
+	useMemo,
+	useContext,
+	createContext,
+} from 'react'
 import { createUseStyles } from 'react-jss'
 import MovableObject from 'Components/MovableObject.js'
 import StaticObject from 'Components/StaticObject.js'
 import Translator from 'Other/translator.js'
-import {SocketContext} from 'Components/App'
+import { SocketContext } from 'Components/App'
 
 const useStyles = createUseStyles({
 	viewport: {
@@ -18,6 +25,8 @@ const useStyles = createUseStyles({
 	},
 })
 
+export const TranslatorContext = createContext()
+
 const defaultSeeing = [
 	{
 		type: 'bg',
@@ -25,9 +34,9 @@ const defaultSeeing = [
 		position: [3000, 3000],
 	},
 	//{
-		//type: 'target',
-		//id: 'target',
-		//position: [0, 0],
+	//type: 'target',
+	//id: 'target',
+	//position: [0, 0],
 	//},
 ]
 
@@ -47,21 +56,19 @@ function Viewport(props) {
 		let objectData = {
 			__proto__: knownObject,
 			position,
-			movement
+			movement,
 		}
 		let addingValue = movement ? (
-				<MovableObject
-					translator={translator}
-					objectData={objectData}
-					key={knownObject.id}
-				/>
-			) : (
-				<StaticObject
-					translator={translator}
-					objectData={objectData}
-					key={knownObject.id}
-				/>
-			)
+			<MovableObject
+				objectData={objectData}
+				key={knownObject.id}
+			/>
+		) : (
+			<StaticObject
+				objectData={objectData}
+				key={knownObject.id}
+			/>
+		)
 		seeingObjects.current.add(addingValue)
 		rerender({})
 	}
@@ -79,14 +86,16 @@ function Viewport(props) {
 		let globalPosition = translator.localToGlobal(viewportPosition)
 		socket.emit('movement target', globalPosition)
 		//[...seeingObjects.current].find(
-			//object => object.id == 'target'
+		//object => object.id == 'target'
 		//).position = globalPosition
 	}
 	let children = [...seeingObjects.current]
 	return (
-		<div className={classes.viewport} onClick={setTarget}>
-			{children}
-		</div>
+		<TranslatorContext.Provider value={translator}>
+			<div className={classes.viewport} onClick={setTarget}>
+				{children}
+			</div>
+		</TranslatorContext.Provider>
 	)
 }
 
