@@ -2,7 +2,6 @@ import Viewport from "Components/Viewport";
 import React from 'react'
 
 export default function Gameplay(props) {
-	console.log(props)
 	return (
 		<div>
 			<Viewport

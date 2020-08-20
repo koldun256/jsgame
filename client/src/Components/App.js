@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, createContext } from 'react'
 import ReactDOM from 'react-dom'
 import Menu from 'Components/Menu'
 import Game from 'Components/Game'
-import { socket } from 'Other/util'
+import io from 'socket.io-client'
 
-function Main() {
+const socket = io.connect('http://127.0.0.1:5000')
+export const SocketContext = createContext(socket)
+
+function App() {
 	let [location, setLocation] = useState('menu')
 	let [gameSetting, setGameSetting] = useState()
 	useEffect(() => {
@@ -20,4 +23,4 @@ function Main() {
 	}
 }
 
-ReactDOM.render(<Main />, document.getElementById('root'))
+ReactDOM.render(<App />, document.getElementById('root'))

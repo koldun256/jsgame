@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import GameObject from "Components/GameObject.js";
 import eachFrame from "Other/frame.js";
 
-export default function StaticObject({ object, translator }) {
+export default function StaticObject({ objectData, translator }) {
 	let [, rerender] = useState();
 
 	useEffect(() => {
@@ -14,9 +14,9 @@ export default function StaticObject({ object, translator }) {
 		<GameObject
 			translator={translator}
 			object={{
-				type: object.type,
-				me: object.protagonist,
-				position: object.position
+				type: objectData.type,
+				me: objectData.protagonist,
+				position: objectData.position
 			}}
 		/>
 	);

@@ -1,9 +1,9 @@
-import React, {useState, useEffect} from 'react'
-import {socket} from 'Other/util'
+import React, {useState, useEffect, useContext} from 'react'
+import {SocketContext} from 'Components/App.js'
 
 export default function Gamewait(props){
-	console.log(props)
     let [players, setPlayers] = useState(props.data.waiting)
+	let socket = useContext(SocketContext)
 	useEffect(() => {
 		socket.on('adding to waiting', newUser => {
 			setPlayers(players.concat([newUser]))

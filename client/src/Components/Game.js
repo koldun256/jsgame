@@ -1,19 +1,17 @@
-import React, {useState, useEffect} from 'react'
+import React, {useState, useEffect, useContext} from 'react'
 import Gameplay from 'Components/Gameplay'
 import Gamewait from 'Components/Gamewait'
-import {socket} from 'Other/util'
+import {SocketContext} from 'Components/App'
 
 export default function Game(props){
     let [location, setLocation] = useState('wait')
     let [data, setData] = useState()
-	console.log(props)
+	let socket = useContext(SocketContext)
 	useEffect(() => {
 		socket.on('room start', msg => {
-			console.log('afdbvz')
-			console.log(msg)
 			setData(msg)
 			setLocation('play')
-		})		
+		})
 	}, [])
     if(location == 'wait'){
         return(

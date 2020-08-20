@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useMemo, useContext } from 'react'
 import { createUseStyles } from 'react-jss'
 import MovableObject from 'Components/MovableObject.js'
 import StaticObject from 'Components/StaticObject.js'
 import Translator from 'Other/translator.js'
-import { socket } from 'Other/util.js'
+import {SocketContext} from 'Components/App'
+
 const useStyles = createUseStyles({
 	viewport: {
 		margin: 'auto',
@@ -23,32 +24,45 @@ const defaultSeeing = [
 		id: 'bg',
 		position: [3000, 3000],
 	},
-	{
-		type: 'target',
-		id: 'target',
-		position: [0, 0],
-	},
+	//{
+		//type: 'target',
+		//id: 'target',
+		//position: [0, 0],
+	//},
 ]
 
 function Viewport(props) {
 	const classes = useStyles(props),
 		knownObjects = useRef(new Set(props.startKnowing)),
-		seeingObjects = useRef(new Set(defaultSeeing)),
 		translator = useMemo(() => {
 			return Translator(document.documentElement.clientHeight, props.size)
-		}),
-		[, rerender] = useState()
-	console.log(translator);
+		}, []),
+		seeingObjects = useRef(new Set()),
+		[, rerender] = useState(),
+		socket = useContext(SocketContext)
+
 	function see({ id, position, movement }) {
-		if ([...seeingObjects.current].some(object => object.id == id))
-			return console.error('seeing seen object')
 		let knownObject = [...knownObjects.current].find(obj => obj.id == id)
 		if (!knownObject) return console.error('seeing unknown object')
-		seeingObjects.current.add({
+		let objectData = {
 			__proto__: knownObject,
 			position,
-			movement,
-		})
+			movement
+		}
+		let addingValue = movement ? (
+				<MovableObject
+					translator={translator}
+					objectData={objectData}
+					key={knownObject.id}
+				/>
+			) : (
+				<StaticObject
+					translator={translator}
+					objectData={objectData}
+					key={knownObject.id}
+				/>
+			)
+		seeingObjects.current.add(addingValue)
 		rerender({})
 	}
 
@@ -64,33 +78,14 @@ function Viewport(props) {
 		let viewportPosition = [e.clientX - rect.left, e.clientY - rect.top]
 		let globalPosition = translator.localToGlobal(viewportPosition)
 		socket.emit('movement target', globalPosition)
-		;[...seeingObjects.current].find(
-			object => object.id == 'target'
-		).position = globalPosition
+		//[...seeingObjects.current].find(
+			//object => object.id == 'target'
+		//).position = globalPosition
 	}
+	let children = [...seeingObjects.current]
 	return (
 		<div className={classes.viewport} onClick={setTarget}>
-			{[...seeingObjects.current].map(object => {
-				if (object.protagonist)
-					translator.setCenter([...object.position])
-				if (object.movement) {
-					return (
-						<MovableObject
-							object={object}
-							key={object.id}
-							translator={translator}
-						/>
-					)
-				} else {
-					return (
-						<StaticObject
-							object={object}
-							key={object.id}
-							translator={translator}
-						/>
-					)
-				}
-			})}
+			{children}
 		</div>
 	)
 }

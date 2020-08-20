@@ -1,12 +1,13 @@
 export default function Translator(viewportSize, serverViewportSize) {
-	let center = [0, 0]
+	let center = [3, 3]
 	let sizeKoefficient = viewportSize / serverViewportSize
 	console.log(viewportSize);
+	console.log('creating translator');
 	return {
 		setCenter(newCenter) {
-			center = newCenter
+			center = [...newCenter]
 		},
-		localToGlobal(local) {
+		localToGlobal: local => {
 			return [
 				((local[0] - viewportSize / 2) / sizeKoefficient) + center[0],
 				((local[1] - viewportSize / 2) / sizeKoefficient) + center[1]

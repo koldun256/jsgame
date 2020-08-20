@@ -1,19 +1,20 @@
-import React, { useRef, useReducer, useEffect, useState } from 'react'
+import React, { useRef, useReducer, useEffect, useState, useContext } from 'react'
 import GameObject from 'Components/GameObject.js'
 import eachFrame from 'Other/frame.js'
-import { socket } from 'Other/util.js'
 import createMovement from 'Other/movement';
+import {SocketContext} from 'Components/App';
 
-export default function MovableObject({ object, translator }) {
+export default function MovableObject({ objectData, translator }) {
 	const [movement, setMovement] = useState(
-		() => createMovement(object.movement)
+		() => createMovement(objectData.movement)
 	)
-	let [position, move] = useReducer(movement, object.position)
+	let [position, move] = useReducer(movement, objectData.position)
 	let mutablePosition = useRef()
+	let socket = useContext(SocketContext)
 	mutablePosition.current = position
 	useEffect(() => {
 		let movementChangeListener = ({id, movement}) => {
-			if(object.id == id) {
+			if(objectData.id == id) {
 				move('end')
 				setMovement(() => createMovement(movement))
 			}
@@ -22,7 +23,7 @@ export default function MovableObject({ object, translator }) {
 
 		let clearFrame = eachFrame(() => {
 			move('step')
-			if(object.protagonist) translator.setCenter(mutablePosition.current)
+			if(objectData.protagonist) translator.setCenter(mutablePosition.current)
 		})
 
 		return () => {
@@ -35,8 +36,8 @@ export default function MovableObject({ object, translator }) {
 		<GameObject
 			translator={translator}
 			object={{
-				type: object.type,
-				me: object.protagonist,
+				type: objectData.type,
+				me: objectData.protagonist,
 				position: position,
 			}}
 		/>

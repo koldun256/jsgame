@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { socket } from "Other/util";
 import Button from "Components/Button";
+import {SocketContext} from "Components/App";
 
 const defaultSpells = [
 	{
@@ -22,6 +23,12 @@ const defaultSpells = [
 
 export default function Menu() {
 	let [name, setName] = useState("");
+	let socket = useContext(SocketContext)
+
+	let requestEnter = () => socket.emit("request room enter", {
+			spells: defaultSpells,
+			name: name
+		})
 
 	return (
 		<div className="menu">
@@ -30,12 +37,7 @@ export default function Menu() {
 				onChange={event => setName(event.target.value)}
 			/>
 			<Button
-				click={() =>
-					socket.emit("request room enter", {
-						spells: defaultSpells,
-						name: name
-					})
-				}
+				click={requestEnter}
 				text="Присоеденится"
 			/>
 		</div>
