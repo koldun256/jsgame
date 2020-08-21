@@ -7,10 +7,11 @@ import React, {
 	createContext,
 } from 'react'
 import { createUseStyles } from 'react-jss'
-import MovableObject from 'Components/MovableObject.js'
-import StaticObject from 'Components/StaticObject.js'
+//import MovableObject from 'Components/MovableObject.js'
+//import StaticObject from 'Components/StaticObject.js'
 import Translator from 'Other/translator.js'
 import { SocketContext } from 'Components/App'
+import GameObject from './GameObject'
 
 const useStyles = createUseStyles({
 	viewport: {
@@ -56,20 +57,11 @@ function Viewport(props) {
 		let objectData = {
 			__proto__: knownObject,
 			position,
-			movement,
+			movement: movement || { step: [0, 0], end: [Infinity, Infinity] },
 		}
-		let addingValue = movement ? (
-			<MovableObject
-				objectData={objectData}
-				key={knownObject.id}
-			/>
-		) : (
-			<StaticObject
-				objectData={objectData}
-				key={knownObject.id}
-			/>
+		seeingObjects.current.add(
+			<GameObject object={objectData} key={objectData.id} />
 		)
-		seeingObjects.current.add(addingValue)
 		rerender({})
 	}
 

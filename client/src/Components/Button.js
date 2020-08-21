@@ -16,8 +16,8 @@ const useStyles = createUseStyles({
 export default function Button(props){
     let classes = useStyles()
     return (
-        <div className={classes.button} onClick={props.click}>
+        <button className={classes.button} onClick={props.click}>
             <div>{props.text}</div>
-        </div>
+        </button>
     )
 }

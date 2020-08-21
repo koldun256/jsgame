@@ -1,7 +1,8 @@
-import React, {useContext} from "react";
+import React, {useContext, useState} from "react";
 import { createUseStyles } from "react-jss";
 import bgImage from "Assets/img/bg.png";
 import {TranslatorContext} from "Components/Viewport";
+import useMovement from "../Hooks/useMovement";
 
 const useStyles = createUseStyles({
 	gameObject: {
@@ -37,13 +38,14 @@ const useStyles = createUseStyles({
 });
 
 export default function GameObject({ object }) {
+	let position = useMovement(object.movement, object.position, object)
 	let translator = useContext(TranslatorContext)
-	let viewportPosition = translator.globalToLocal(object.position);
+	let viewportPosition = translator.globalToLocal(position);
 	let classes = useStyles({position: viewportPosition, translator});
 	return (
 		<div
 			className={`${classes.gameObject} ${classes[object.type]} ${
-				object.me ? classes.me : ""
+				object.protagonist ? classes.me : ""
 			}`}
 		></div>
 	);
