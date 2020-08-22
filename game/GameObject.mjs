@@ -8,7 +8,13 @@ class GameObject {
 		this.room = room
 		this.type = type
 		this.position = position
-		this.collider = new Collider(this, size, type, room.collisionSystem)
+		this.collider = new Collider(
+			this,
+			{ size },
+			'rect',
+			type,
+			room.collisionSystem
+		)
 
 		if (speed) {
 			this.speed = speed

@@ -1,8 +1,13 @@
-export default function EventSystem() {
-	let listeners = [];
-	this.on = (event, callback) => listeners.push({ event, callback });
-	this.emit = (event, data) =>
-		listeners
+export default class EventSystem {
+	constructor() {
+		this.listeners = []
+	}
+	on(event, callback) {
+		this.listeners.push({ event, callback })
+	}
+	emit(event, data){
+		this.listeners
 			.filter(listener => listener.event == event)
-			.forEach(listener => listener.callback(data));
-};
+			.forEach(listener => listener.callback(data))
+	}
+}

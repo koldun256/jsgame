@@ -22,7 +22,7 @@ class CollisionListener {
 
 		if (!isTouching) this.touching.delete(collider)
 		if (isTouching) this.touching.add(collider);
-
+		
 		if (
 			(this.eventType == "stay" && isTouching) ||
 			(this.eventType == "enter" && isTouching && !wasTouching) ||

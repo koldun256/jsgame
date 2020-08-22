@@ -18,7 +18,8 @@ class Player extends GameObject {
 		this.mana = startMana
 		this.viewport = new Collider(
 			this,
-			viewportSize,
+			{size: viewportSize},
+			'rect',
 			'viewport',
 			room.collisionSystem
 		)
@@ -55,13 +56,14 @@ class Player extends GameObject {
 	}
 
 	see(object) {
-		console.log(object.id);
+		console.log(`seeing object ${object.id} with type ${object.type} from ${this.id}`);
 		//if (this.seeing.has(object)) throw 'see already visible object'
 		this.send('see', object.data('see'))
 		this.seeing.add(object)
 	}
 
 	unsee(object) {
+		console.log('unseeing object');
 		if (!this.seeing.has(object)) throw 'unseeing not visible object'
 		this.send('unsee', object.id)
 		this.seeing.delete(object)

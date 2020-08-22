@@ -12,7 +12,6 @@ function parse(player, data){
 			selectorData.props,
 			children
 		)
-
 		return selectorObject
 	}
 
