@@ -14,7 +14,9 @@ class CollisionSystem {
 		return collider
 	}
 	update() {
-		this.listeners.forEach((listener) => listener.update(this.colliders))
+		//console.log('UPDATING COLLISION SYSTEM===============================');
+		//console.log(this.colliders);
+		this.listeners.forEach(listener => listener.update(this.colliders))
 	}
 	addListener(listener) {
 		this.listeners.push(listener)

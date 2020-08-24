@@ -1,15 +1,16 @@
-import { useEffect, useContext, useReducer, useRef, useState } from 'react'
-import { SocketContext } from 'Components/App'
+import { useContext, useReducer, useRef, useState, useEffect } from 'react'
+import useSubscriber from 'Hooks/useSubscriber'
 import { TranslatorContext } from 'Components/Viewport'
-import eachFrame from 'Other/frame'
-//import useMutableState from 'Hooks/useMutableState'
 
 function MovementReducer({ step, end: target }) {
 	let direction = [step[0] >= 0 ? 1 : -1, step[1] >= 0 ? 1 : -1]
 
 	return (position, action) => {
-		if (action == 'end') {
+		if (action.type == 'end') {
 			return target || position
+		}
+		if (action.type == 'set') {
+			return action.position
 		}
 
 		let newPosition = [position[0] + step[0], position[1] + step[1]]
@@ -20,7 +21,6 @@ function MovementReducer({ step, end: target }) {
 			newPosition[1] * direction[1] >= target[1] * direction[1]
 		)
 			return target || position
-
 		return newPosition
 	}
 }
@@ -30,34 +30,25 @@ function useMovement(startMovementData, startPosition, object) {
 		MovementReducer(startMovementData)
 	)
 	const [position, move] = useReducer(
-		//(...args) => movementReducer.current(...args),
 		movementReducer /*.current*/,
-		startPosition
+		startPosition,
 	)
+	useEffect(() => move({type: 'set', position: startPosition}), startPosition)
 	const mutablePosition = useRef(startPosition)
 	mutablePosition.current = position
-	const socket = useContext(SocketContext)
 	const translator = useContext(TranslatorContext)
-
-	useEffect(() => {
-		let clearFrame = eachFrame(() => {
-			move('step')
-			if (object.protagonist)
-				translator.setCenter(mutablePosition.current)
-		})
-		let movementChangeListener = msg => {
-			if (msg.id == object.id) {
-				move('end')
-				setMovementReducer(() => MovementReducer(msg.movement))
-			}
+	useSubscriber('frame', () => {
+		move({type: 'step'})
+		if (object.protagonist)
+			translator.setCenter(mutablePosition.current)
+	})
+	useSubscriber('socket@change movement', msg => {
+		if (msg.id == object.id) {
+			move({type: 'end'})
+			setMovementReducer(() => MovementReducer(msg.movement))
 		}
-		socket.on('change movement', movementChangeListener)
+	})
 
-		return () => {
-			clearFrame()
-			socket.off('change movement', movementChangeListener)
-		}
-	}, [])
 	return position
 }
 

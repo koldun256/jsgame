@@ -39,9 +39,12 @@ class Player extends GameObject {
 		socket.on('movement target', target => this.setTarget(target))
 		socket.on('cast', spellIndex => this.cast(spellIndex))
 
-		this.viewport.onEnter('all', object => this.see(object))
-		this.viewport.onExit('all', object => this.unsee(object))
-
+		this.viewport.onEnter('all', collider => {
+			if(collider.type != 'viewport') this.see(collider.owner)
+		})
+		this.viewport.onExit('all', collider => {
+			if(collider.type != 'viewport') this.unsee(collider.owner)
+		})
 		//this.collider.onTouch('mana zone', () => this.send('mana start'))
 		//this.collider.onExit('mana zone', () => this.send('mana end'))
 		//this.collider.onStay("mana zone", () => this.addMana(manaRegen));
@@ -57,7 +60,7 @@ class Player extends GameObject {
 
 	see(object) {
 		console.log(`seeing object ${object.id} with type ${object.type} from ${this.id}`);
-		//if (this.seeing.has(object)) throw 'see already visible object'
+		if (this.seeing.has(object)) throw 'see already visible object'
 		this.send('see', object.data('see'))
 		this.seeing.add(object)
 	}

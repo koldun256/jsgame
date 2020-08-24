@@ -3,15 +3,14 @@ import React, {
 	useEffect,
 	useRef,
 	useMemo,
-	useContext,
 	createContext,
 } from 'react'
 import { createUseStyles } from 'react-jss'
-//import MovableObject from 'Components/MovableObject.js'
-//import StaticObject from 'Components/StaticObject.js'
+import eventSystem from 'Other/eventSystem';
 import Translator from 'Other/translator.js'
-import { SocketContext } from 'Components/App'
-import GameObject from './GameObject'
+import GameObject from 'Components/GameObject'
+import Target from 'Components/Target'
+import useSubscriber from 'Hooks/useSubscriber'
 
 const useStyles = createUseStyles({
 	viewport: {
@@ -29,16 +28,16 @@ const useStyles = createUseStyles({
 export const TranslatorContext = createContext()
 
 const defaultSeeing = [
-	{
-		type: 'bg',
-		id: 'bg',
-		position: [3000, 3000],
-	},
-	//{
-	//type: 'target',
-	//id: 'target',
-	//position: [0, 0],
-	//},
+	<GameObject
+		object={{
+			type: 'bg',
+			position: [3000, 3000],
+			id: 'bg',
+			movement: { step: [0, 0], end: [Infinity, Infinity] },
+		}}
+		key="bg"
+	/>,
+	<Target key='target'/>,
 ]
 
 function Viewport(props) {
@@ -47,9 +46,8 @@ function Viewport(props) {
 		translator = useMemo(() => {
 			return Translator(document.documentElement.clientHeight, props.size)
 		}, []),
-		seeingObjects = useRef(new Set()),
-		[, rerender] = useState(),
-		socket = useContext(SocketContext)
+		seeingObjects = useRef(new Set(defaultSeeing)),
+		[, rerender] = useState()
 
 	function see({ id, position, movement }) {
 		let knownObject = [...knownObjects.current].find(obj => obj.id == id)
@@ -67,19 +65,17 @@ function Viewport(props) {
 
 	useEffect(() => {
 		props.startSeeing.forEach(see)
-
-		socket.on('know', msg => knownObjects.add(msg))
-		socket.on('see', msg => see(msg))
 	}, [])
+
+	useSubscriber('socket@know', object => knownObjects.add(object))
+	useSubscriber('socket@see', see)
 
 	const setTarget = e => {
 		let rect = e.target.getBoundingClientRect()
 		let viewportPosition = [e.clientX - rect.left, e.clientY - rect.top]
 		let globalPosition = translator.localToGlobal(viewportPosition)
-		socket.emit('movement target', globalPosition)
-		//[...seeingObjects.current].find(
-		//object => object.id == 'target'
-		//).position = globalPosition
+		eventSystem.publish('socket-emit@movement target', globalPosition)
+		eventSystem.publish('target', globalPosition)
 	}
 	let children = [...seeingObjects.current]
 	return (

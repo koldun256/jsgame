@@ -1,11 +1,6 @@
+import eventSystem from 'Other/eventSystem';
 const frameDelay = 100
-let actions = new Set()
 
 setInterval(() => {
-	[...actions].forEach(action => action())
+	eventSystem.publish('frame', null)
 }, frameDelay)
-
-export default function eachFrame(operation){
-	actions.add(operation)
-	return () => actions.delete(operation)
-}

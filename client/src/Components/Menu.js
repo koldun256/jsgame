@@ -1,7 +1,19 @@
 import React, { useState, useContext } from "react";
-import { socket } from "Other/util";
 import Button from "Components/Button";
-import {SocketContext} from "Components/App";
+import eventSystem from 'Other/eventSystem';
+import {createUseStyles} from 'react-jss';
+
+const useStyles = createUseStyles({
+	card: {
+		position: 'absolute',
+		//height: 400,
+		width: 300,
+		transform: 'translate(-50%, -50%)',
+		top: '50vh',
+		left: '50vw',
+		backgroundColor: '#D0D0D0'
+	}
+})
 
 const defaultSpells = [
 	{
@@ -23,15 +35,17 @@ const defaultSpells = [
 
 export default function Menu() {
 	let [name, setName] = useState("");
-	let socket = useContext(SocketContext)
+	let classes = useStyles()
 
-	let requestEnter = () => socket.emit("request room enter", {
+	let requestEnter = () => {
+		eventSystem.publish("socket-emit@request room enter", {
 			spells: defaultSpells,
 			name: name
 		})
+	}
 
 	return (
-		<div className="menu">
+		<div className={`${classes.card} border rounded shadow stacked-center`}>
 			<input
 				value={name}
 				onChange={event => setName(event.target.value)}

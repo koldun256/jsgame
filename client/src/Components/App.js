@@ -2,20 +2,19 @@ import React, { useState, useEffect, createContext } from 'react'
 import ReactDOM from 'react-dom'
 import Menu from 'Components/Menu'
 import Game from 'Components/Game'
-import io from 'socket.io-client'
+import 'Assets/relaxCSS.css'
+import 'Other/socket'
+import 'Other/frame'
+import useSubscriber from '../Hooks/useSubscriber'
 
-const socket = io.connect('http://127.0.0.1:5000')
-export const SocketContext = createContext(socket)
 
 function App() {
 	let [location, setLocation] = useState('menu')
 	let [gameSetting, setGameSetting] = useState()
-	useEffect(() => {
-		socket.on('response room enter', data => {
-			setGameSetting(data)
-			setLocation('game')
-		})
-	}, [])
+	useSubscriber('socket@response room enter', data => {
+		setGameSetting(data)
+		setLocation('game')
+	})
 	if (location == 'menu') {
 		return <Menu />
 	} else {

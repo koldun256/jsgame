@@ -27,7 +27,21 @@ const collisionAlgorithms = {
 		let result = (a || b) && (c || d)
 		return result
 	},
-	'rect ring': (rect, ring) => {},
+	'rect ring': (rect, ring) => {
+		function calcDistance(pointA, pointB) {
+			return Math.abs(
+				Math.sqrt(
+					(pointA[0] - pointB[0]) ** 2 +
+						(pointA[1] - pointB[1]) ** 2
+				)
+			)
+		}
+		let distance = calcDistance(rect.position, ring.position)
+		return (
+			distance > ring.payload.radius / 2 - ring.payload.width / 2 &&
+			distance < ring.payload.radius / 2 + ring.payload.width / 2
+		)
+	},
 }
 
 class Collider {
@@ -71,28 +85,4 @@ class Collider {
 	}
 }
 
-Collider.generateManaZones = function (basePositions, distance, width, room) {
-	basePositions.forEach(basePosition => {
-		let zone = new Collider(
-			{ position: basePosition, room: room },
-			[0, 0],
-			'mana zone'
-		)
-		zone.isTouching = other => {
-			function calcDistance(pointA, pointB) {
-				return Math.abs(
-					Math.sqrt(
-						(pointA[0] - pointB[0]) ** 2 +
-							(pointA[1] - pointB[1]) ** 2
-					)
-				)
-			}
-			let playerDistance = calcDistance(other.position, basePosition)
-			return (
-				playerDistance > distance / 2 - width / 2 &&
-				playerDistance < distance / 2 + width / 2
-			)
-		}
-	})
-}
 export default Collider

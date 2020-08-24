@@ -1,29 +1,30 @@
 import GameObject from './GameObject.mjs'
-function Team(room, position){
-	let size = room.settings['base size']
-	let playersCount = room.settings['players in team']
-	let pointsToWin = room.settings['points to win']
 
-    this.__proto__ = new GameObject(room, 'base', position, size)
-    this.players = []
-    this.points = 0
+class Team extends GameObject {
+	constructor(room, position){
+		let size = room.settings['base size']
+		super(room, 'base', position, size)
+		this.playersCount = room.settings['players in team']
+		this.pointsToWin = room.settings['points to win']
 
-    this.full = function(){
-		console.log(this.players.length)
-		console.log(playersCount)
-		return this.players.length == playersCount
+		this.players = []
+		this.points = 0
 	}
 
-    this.addPoints = function(points){
-        this.points += points
-        if(this.points >= pointsToWin) room.end(this.id)
-    }
+	full(){
+		return this.players.length == this.playersCount
+	}
 
-    this.add = function(player) {
-		console.log('adding player')
-        if(this.players.length <= playersCount){
-            this.players.push(player)
-        }
-    }
+	addPoints(points){
+		this.points += points
+		if(this.points >= this.pointsToWin) this.room.end(this.id)
+	}
+
+	add(player) {
+		if(this.players.length <= this.playersCount){
+			this.players.push(player)
+		}
+	}
+
 }
 export default Team

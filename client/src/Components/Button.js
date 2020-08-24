@@ -1,6 +1,5 @@
 import React from 'react'
 import {createUseStyles} from 'react-jss'
-
 const useStyles = createUseStyles({
     button: {
         backgroundColor: 'green',
@@ -16,7 +15,7 @@ const useStyles = createUseStyles({
 export default function Button(props){
     let classes = useStyles()
     return (
-        <button className={classes.button} onClick={props.click}>
+        <button className='btn btn-2' onClick={props.click}>
             <div>{props.text}</div>
         </button>
     )
