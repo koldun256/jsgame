@@ -15,7 +15,7 @@ function Target() {
 				position,
 				id: 'target',
 				type: 'target',
-				movement: { step: [0, 0], end: [Infinity, Infinity] },
+				movement: { step: [0, 0]},
 			}}
 		/>
 	)

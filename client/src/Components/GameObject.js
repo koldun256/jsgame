@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react'
+import React, { useContext } from 'react'
 import { createUseStyles } from 'react-jss'
 import bgImage from 'Assets/img/bg.png'
 import { TranslatorContext } from 'Components/Viewport'
@@ -39,9 +39,7 @@ const useStyles = createUseStyles({
 
 export default function GameObject({ object }) {
 	let position = useMovement(object.movement, object.position, object)
-	useEffect(() => {
-		console.log('recreating game object');
-	}, [])
+
 	let translator = useContext(TranslatorContext)
 	let viewportPosition = translator.globalToLocal(position)
 	let classes = useStyles({ position: viewportPosition, translator })

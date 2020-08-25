@@ -55,7 +55,7 @@ function Viewport(props) {
 		let objectData = {
 			__proto__: knownObject,
 			position,
-			movement: movement || { step: [0, 0], end: [Infinity, Infinity] },
+			movement: movement || {step:[0,0]}
 		}
 		seeingObjects.current.add(
 			<GameObject object={objectData} key={objectData.id} />

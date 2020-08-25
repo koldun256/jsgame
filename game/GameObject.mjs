@@ -60,7 +60,7 @@ class GameObject {
 	}
 
 	setTarget(target) {
-		console.log('set target')
+		console.log('set target' , target)
 		if (!this.movement) throw 'changing movement target of static object'
 		this.setMovement(new Movement(this, target, this.speed))
 	}

@@ -5,6 +5,7 @@ class Movement {
 		this.hasEnd = hasEnd
 		this.speed = speed
 		this.owner = owner
+		this.target = target
 		this.vector = new Vector([...owner.position], target)
 	}
 	move() {
