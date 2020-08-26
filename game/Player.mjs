@@ -9,7 +9,13 @@ class Player extends GameObject {
 		let viewportSize = room.settings['viewport']
 		let startMana = room.settings['start mana']
 
-		super(room, 'player', [...team.position], size, speed)
+		super(
+			room,
+			'player',
+			[...team.position],
+			{ shape: 'rect', payload: { size } },
+			speed
+		)
 
 		this.name = name
 		this.socket = socket
@@ -18,7 +24,7 @@ class Player extends GameObject {
 		this.mana = startMana
 		this.viewport = new Collider(
 			this,
-			{size: viewportSize},
+			{ size: viewportSize },
 			'rect',
 			'viewport',
 			room.collisionSystem
@@ -40,10 +46,10 @@ class Player extends GameObject {
 		socket.on('cast', spellIndex => this.cast(spellIndex))
 
 		this.viewport.onEnter('all', collider => {
-			if(collider.type != 'viewport') this.see(collider.owner)
+			if (collider.type != 'viewport') this.see(collider.owner)
 		})
 		this.viewport.onExit('all', collider => {
-			if(collider.type != 'viewport') this.unsee(collider.owner)
+			if (collider.type != 'viewport') this.unsee(collider.owner)
 		})
 		//this.collider.onTouch('mana zone', () => this.send('mana start'))
 		//this.collider.onExit('mana zone', () => this.send('mana end'))
@@ -59,14 +65,16 @@ class Player extends GameObject {
 	}
 
 	see(object) {
-		console.log(`seeing object ${object.id} with type ${object.type} from ${this.id}`);
+		console.log(
+			`seeing object ${object.id} with type ${object.type} from ${this.id}`
+		)
 		if (this.seeing.has(object)) throw 'see already visible object'
 		this.send('see', object.data('see'))
 		this.seeing.add(object)
 	}
 
 	unsee(object) {
-		console.log('unseeing object');
+		console.log('unseeing object')
 		if (!this.seeing.has(object)) throw 'unseeing not visible object'
 		this.send('unsee', object.id)
 		this.seeing.delete(object)

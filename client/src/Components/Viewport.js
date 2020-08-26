@@ -50,6 +50,7 @@ function Viewport(props) {
 		[, rerender] = useState()
 
 	function see({ id, position, movement }) {
+		console.log('seeing');
 		let knownObject = [...knownObjects.current].find(obj => obj.id == id)
 		if (!knownObject) return console.error('seeing unknown object')
 		let objectData = {

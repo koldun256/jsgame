@@ -35,6 +35,12 @@ const useStyles = createUseStyles({
 		height: translator.getSize(20),
 		border: '2px solid red',
 	}),
+	manaZone: ({translator}) => ({
+		width: translator.getSize(1000),
+		height: translator.getSize(1000),
+		borderRadius: '50%',
+		border: translator.getSize(150)+'px solid teal'
+	})
 })
 
 export default function GameObject({ object }) {

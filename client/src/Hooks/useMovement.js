@@ -5,7 +5,7 @@ import { TranslatorContext } from 'Components/Viewport'
 function reducer({ position, end, step, direction, ended }, action) {
 	if (action.type == 'set movement') {
 		return {
-			position: end || position,
+			position,
 			...action.movement,
 			direction: [
 				action.movement.step[0] >= 0 ? 1 : -1,
@@ -48,7 +48,6 @@ function useMovement(startMovementData, startPosition, object) {
 			{ type: 'set movement', movement: startMovementData }
 		)
 	)
-	console.log(state);
 	//useEffect(() => dispatch({ action: 'teleport', position: startPosition }), [
 		//startPosition,
 	//])

@@ -15,30 +15,30 @@ class Room {
 		this.id = util.generateID()
 
 		//генерация баз и команд
-		this.settings['bases positions'].forEach((basePosition) => {
+		this.settings['bases positions'].forEach(basePosition => {
 			let newTeam = new Team(this, basePosition)
 			this.teams.push(newTeam)
-			this.gameObjects.push(newTeam)
 		})
 	}
 
 	getTeam(teamID) {
 		if (teamID) {
-			return this.teams.find((team) => team.id == teamID)
+			return this.teams.find(team => team.id == teamID)
 		} else {
-			let team = this.teams.most((team) => -team.players.length)
+			let team = this.teams.most(team => -team.players.length)
 			return team
 		}
 	}
 
 	start() {
 		this.collisionSystem.update()
-		this.players.forEach((protagonist) => {
+		console.log(this.gameObjects)
+		this.players.forEach(protagonist => {
 			protagonist.send('room start', {
-				knowing: this.gameObjects.map((gm) =>
+				knowing: this.gameObjects.map(gm =>
 					gm.data('know').add({ protagonist: gm == protagonist })
 				),
-				seeing: [...protagonist.seeing].map((object) =>
+				seeing: [...protagonist.seeing].map(object =>
 					object.data('see')
 				),
 			})
@@ -50,20 +50,18 @@ class Room {
 
 	onFrame() {
 		this.gameObjects
-			.filter((gm) => 'lifetime' in gm)
-			.forEach((gm) => {
+			.filter(gm => 'lifetime' in gm)
+			.forEach(gm => {
 				gm.lifetime--
 				if (!gm.lifetime)
 					this.gameObjects.splice(this.gameObjects.indexOf(gm), 1)
 			})
-		this.gameObjects
-			.filter((gm) => 'movement' in gm)
-			.forEach((gm) => gm.move())
+		this.gameObjects.filter(gm => 'movement' in gm).forEach(gm => gm.move())
 		this.collisionSystem.update()
 	}
 
 	onSync() {
-		this.send('sync', (player) => player.data('sync'))
+		this.send('sync', player => player.data('sync'))
 	}
 
 	end(endData) {
@@ -72,7 +70,7 @@ class Room {
 	}
 
 	send(msg, genContent) {
-		this.players.forEach((player) => player.send(msg, genContent(player)))
+		this.players.forEach(player => player.send(msg, genContent(player)))
 	}
 
 	addPlayer(user, name, spellsData, teamID) {
@@ -80,10 +78,9 @@ class Room {
 		let player = user.createPlayer(name, this, team, spellsData)
 		this.send('adding to waiting', () => player.data('connect to waiting'))
 		this.players.push(player)
-		this.gameObjects.push(player)
 		player.send('response room enter', this.data('connect'))
 
-		if (!this.teams.some((team) => !team.full()))
+		if (!this.teams.some(team => !team.full()))
 			setTimeout(() => this.start(), 1000)
 	}
 
@@ -95,7 +92,7 @@ class Room {
 				}
 			case 'connect':
 				return {
-					waiting: this.players.map((player) =>
+					waiting: this.players.map(player =>
 						player.data('connect to waiting')
 					),
 					id: this.id,
@@ -104,10 +101,10 @@ class Room {
 	}
 
 	//Collider.generateManaZones(
-		//this.settings["bases positions"],
-		//this.settings["mana zone distance"],
-		//this.settings["mana zone width"],
-		//this
+	//this.settings["bases positions"],
+	//this.settings["mana zone distance"],
+	//this.settings["mana zone width"],
+	//this
 	//);
 }
 

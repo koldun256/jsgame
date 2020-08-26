@@ -7,8 +7,7 @@ class CollisionSystem {
 		if (!(collider.type in this.colliders)) {
 			this.colliders[collider.type] = []
 		}
-		console.log(this.colliders)
-		console.log(collider)
+		console.log('adding collider ', collider.type)
 		this.colliders[collider.type].push(collider)
 		this.colliders.all.push(collider)
 		return collider

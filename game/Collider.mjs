@@ -36,17 +36,16 @@ const collisionAlgorithms = {
 				)
 			)
 		}
-		let distance = calcDistance(rect.position, ring.position)
-		return (
-			distance > ring.payload.radius / 2 - ring.payload.width / 2 &&
+		let distance = calcDistance(rect.payload.position, ring.payload.position)
+		let result = distance > ring.payload.radius / 2 - ring.payload.width / 2 &&
 			distance < ring.payload.radius / 2 + ring.payload.width / 2
-		)
+		//console.log('adsafvaert ',result,ring.payload,rect.payload)
+		return result
 	},
 }
 
 class Collider {
 	constructor(owner, payload, shape, type, collisionSystem) {
-		console.log(owner)
 		this.payload = payload.add({ position: owner.position })
 		this.shape = shape
 		this.owner = owner

@@ -3,18 +3,19 @@ import Movement from './Movement.mjs'
 import Collider from './Collider.mjs'
 
 class GameObject {
-	constructor(room, type, position, size, speed) {
+	constructor(room, type, position, colliderData, speed) {
 		this.id = util.generateID()
 		this.room = room
 		this.type = type
 		this.position = position
 		this.collider = new Collider(
 			this,
-			{ size },
-			'rect',
+			colliderData.payload.add({position}),
+			colliderData.shape,
 			type,
 			room.collisionSystem
 		)
+		room.gameObjects.push(this)
 
 		if (speed) {
 			this.speed = speed
