@@ -1,21 +1,14 @@
-import React, { useState } from 'react'
+import React from 'react'
 import GameObject from 'Components/GameObject';
-import useSubscriber from 'Hooks/useSubscriber';
 
 function Target() {
-	const [position, setPosition] = useState([0, 0])
-	useSubscriber('target', target => {
-		console.log('asd', target);
-		setPosition(target)
-	})
-	console.log(position);
 	return (
 		<GameObject
 			object={{
-				position,
+				position: [0,0],
 				id: 'target',
 				type: 'target',
-				movement: { step: [0, 0]},
+				movement: { startPosition: [0,0], step: [0, 0]},
 			}}
 		/>
 	)

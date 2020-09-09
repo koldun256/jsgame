@@ -4,39 +4,21 @@ import { TranslatorContext } from 'Components/Viewport'
 
 function reducer(state, action) {
 	if (action.type == 'set movement') {
+		console.log(action.movement);
 		return {
-			position: state.position,
-			movement: {
-				...action.movement,
-				ended: false,
-				direction: [
-					action.movement.step[0] >= 0 ? 1 : -1,
-					action.movement.step[1] >= 0 ? 1 : -1,
-				],
-			},
+			position: action.movement.startPosition || state.position,
+			movement: action.movement,
 		}
 	}
 	if (action.type == 'step') {
-		if (state.movement.ended) {
-			return state
-		}
 		state.position[0] += state.movement.step[0]
 		state.position[1] += state.movement.step[1]
-		if (state.movement.end) {
-			if (
-				state.position[0] * state.movement.direction[0] >=
-					state.movement.end[0] * state.movement.direction[0] ||
-				state.position[1] * state.movement.direction[1] >=
-					state.movement.end[1] * state.movement.direction[1]
-			) {
-				state.position = state.movement.end
-				state.movement.ended = true
-			}
-		}
+		
 		return {...state}
 	}
 	if (action.type == 'teleport') {
-		//return { position: action.position, end, step, direction, ended }
+		state.position = action.position
+		return {...state}
 	}
 }
 
@@ -50,6 +32,9 @@ function useMovement(startMovementData, startPosition, object) {
 	const mutablePosition = useRef()
 	mutablePosition.current = state.position
 	const translator = useContext(TranslatorContext)
+	useSubscriber('teleport', ({id, position}) => {
+		if(id == object.id) dispatch({type: 'teleport', position})
+	})
 	useSubscriber('frame', () => {
 		dispatch({ type: 'step' })
 

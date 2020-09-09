@@ -6,7 +6,7 @@ import React, {
 	createContext,
 } from 'react'
 import { createUseStyles } from 'react-jss'
-import eventSystem from 'Other/eventSystem';
+import eventSystem from 'Other/eventSystem'
 import Translator from 'Other/translator.js'
 import GameObject from 'Components/GameObject'
 import Target from 'Components/Target'
@@ -33,11 +33,11 @@ const defaultSeeing = [
 			type: 'bg',
 			position: [3000, 3000],
 			id: 'bg',
-			movement: { step: [0, 0], end: [Infinity, Infinity] },
+			movement: { step: [0, 0], startPosition: [3000, 3000] },
 		}}
 		key="bg"
 	/>,
-	<Target key='target'/>,
+	<Target key="target" />,
 ]
 
 function Viewport(props) {
@@ -50,13 +50,13 @@ function Viewport(props) {
 		[, rerender] = useState()
 
 	function see({ id, position, movement }) {
-		console.log('seeing');
+		console.log('seeing')
 		let knownObject = [...knownObjects.current].find(obj => obj.id == id)
 		if (!knownObject) return console.error('seeing unknown object')
 		let objectData = {
 			__proto__: knownObject,
 			position,
-			movement: movement || {step:[0,0]}
+			movement: movement || { step: [0, 0] },
 		}
 		seeingObjects.current.add(
 			<GameObject object={objectData} key={objectData.id} />
@@ -75,7 +75,10 @@ function Viewport(props) {
 		let viewportPosition = [e.clientX - rect.left, e.clientY - rect.top]
 		let globalPosition = translator.localToGlobal(viewportPosition)
 		eventSystem.publish('socket-emit@movement target', globalPosition)
-		eventSystem.publish('target', globalPosition)
+		eventSystem.publish('teleport', {
+			id: 'target',
+			position: globalPosition,
+		})
 	}
 	let children = [...seeingObjects.current]
 	return (

@@ -7,6 +7,7 @@ class Movement {
 		this.owner = owner
 		this.target = target
 		this.vector = new Vector([...owner.position], target)
+		this.startPosition = [...owner.position]
 	}
 	move() {
 		let delta = this.vector.getStep(this.speed)
@@ -18,8 +19,8 @@ class Movement {
 	}
 	data() {
 		return {
+			startPosition: this.startPosition,
 			step: this.vector.getStep(this.speed),
-			end: this.hasEnd ? this.target : null,
 		}
 	}
 	static zero(owner) {
