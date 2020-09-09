@@ -37,9 +37,8 @@ const collisionAlgorithms = {
 			)
 		}
 		let distance = calcDistance(rect.payload.position, ring.payload.position)
-		let result = distance > ring.payload.radius / 2 - ring.payload.width / 2 &&
-			distance < ring.payload.radius / 2 + ring.payload.width / 2
-		//console.log('adsafvaert ',result,ring.payload,rect.payload)
+		let result = distance > (ring.payload.radius - ring.payload.width) &&
+			distance < ring.payload.radius
 		return result
 	},
 }

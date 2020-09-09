@@ -63,7 +63,6 @@ function Viewport(props) {
 		)
 		rerender({})
 	}
-
 	useEffect(() => {
 		props.startSeeing.forEach(see)
 	}, [])

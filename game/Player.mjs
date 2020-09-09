@@ -51,8 +51,14 @@ class Player extends GameObject {
 		this.viewport.onExit('all', collider => {
 			if (collider.type != 'viewport') this.unsee(collider.owner)
 		})
-		//this.collider.onTouch('mana zone', () => this.send('mana start'))
-		//this.collider.onExit('mana zone', () => this.send('mana end'))
+		this.collider.onEnter('manaZone', () => {
+			console.log('enter mana');
+			this.send('mana start')
+		})
+		this.collider.onExit('manaZone', () => {
+			console.log('exit mana');
+			this.send('mana end')
+		})
 		//this.collider.onStay("mana zone", () => this.addMana(manaRegen));
 	}
 

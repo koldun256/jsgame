@@ -2,42 +2,41 @@ import { useContext, useReducer, useRef, useEffect } from 'react'
 import useSubscriber from 'Hooks/useSubscriber'
 import { TranslatorContext } from 'Components/Viewport'
 
-function reducer({ position, end, step, direction, ended }, action) {
+function reducer(state, action) {
 	if (action.type == 'set movement') {
 		return {
-			position,
-			...action.movement,
-			direction: [
-				action.movement.step[0] >= 0 ? 1 : -1,
-				action.movement.step[1] >= 0 ? 1 : -1,
-			],
-			ended: false,
+			position: state.position,
+			movement: {
+				...action.movement,
+				ended: false,
+				direction: [
+					action.movement.step[0] >= 0 ? 1 : -1,
+					action.movement.step[1] >= 0 ? 1 : -1,
+				],
+			},
 		}
 	}
 	if (action.type == 'step') {
-		let newPosition = position
-		if (ended) {
-			newPosition = end || position
-		} else {
-			newPosition = [position[0] + step[0], position[1] + step[1]]
+		if (state.movement.ended) {
+			return state
+		}
+		state.position[0] += state.movement.step[0]
+		state.position[1] += state.movement.step[1]
+		if (state.movement.end) {
 			if (
-				end &&
-				newPosition[0] * direction[0] >= end[0] * direction[0] &&
-				newPosition[1] * direction[1] >= end[1] * direction[1]
+				state.position[0] * state.movement.direction[0] >=
+					state.movement.end[0] * state.movement.direction[0] ||
+				state.position[1] * state.movement.direction[1] >=
+					state.movement.end[1] * state.movement.direction[1]
 			) {
-				return {
-					position: end || position,
-					ended: true,
-					step,
-					direction,
-					end,
-				}
+				state.position = state.movement.end
+				state.movement.ended = true
 			}
 		}
-		return { position: newPosition, ended, step, direction, end }
+		return {...state}
 	}
 	if (action.type == 'teleport') {
-		return { position: action.position, end, step, direction, ended }
+		//return { position: action.position, end, step, direction, ended }
 	}
 }
 
@@ -48,14 +47,12 @@ function useMovement(startMovementData, startPosition, object) {
 			{ type: 'set movement', movement: startMovementData }
 		)
 	)
-	//useEffect(() => dispatch({ action: 'teleport', position: startPosition }), [
-		//startPosition,
-	//])
 	const mutablePosition = useRef()
 	mutablePosition.current = state.position
 	const translator = useContext(TranslatorContext)
 	useSubscriber('frame', () => {
 		dispatch({ type: 'step' })
+
 		if (object.protagonist) translator.setCenter(mutablePosition.current)
 	})
 	useSubscriber('socket@change movement', msg => {
