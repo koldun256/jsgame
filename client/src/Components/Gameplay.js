@@ -20,8 +20,7 @@ export default function Gameplay(props) {
 			</div>
 			<div>
 				<Viewport
-					startSeeing={props.data.seeing}
-					startKnowing={props.data.knowing}
+					seeing={props.data.seeing}
 					size={900}
 				/>
 			</div>

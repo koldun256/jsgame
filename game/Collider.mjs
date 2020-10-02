@@ -1,5 +1,6 @@
 import CollisionListener from './CollisionListener'
 
+
 const collisionAlgorithms = {
 	'rect rect': (rect1, rect2) => {
 		let a = false,
@@ -55,6 +56,7 @@ class Collider {
 	}
 
 	isTouching(other) {
+		if(other == this) return false
 		if (collisionAlgorithms[`${this.shape} ${other.shape}`]) {
 			return collisionAlgorithms[`${this.shape} ${other.shape}`](
 				this,

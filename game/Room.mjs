@@ -9,7 +9,7 @@ class Room {
 		this.gameObjects = []
 		this.teams = []
 		this.players = []
-		this.settings = setting.modes[mode]
+		this.settings = setting.add(setting.modes[mode])
 		this.eventSystem = new EventSystem()
 		this.collisionSystem = new CollisionSystem()
 		this.id = util.generateID()
@@ -32,15 +32,11 @@ class Room {
 
 	start() {
 		this.collisionSystem.update()
-		console.log(this.gameObjects)
 		this.players.forEach(protagonist => {
 			protagonist.send('room start', {
-				knowing: this.gameObjects.map(gm =>
-					gm.data('know').add({ protagonist: gm == protagonist })
-				),
 				seeing: [...protagonist.seeing].map(object =>
 					object.data('see')
-				),
+				).concat([protagonist.data('see').add({protagonist: true})]),
 			})
 		})
 		Main.eventSystem.emit('room start', this.id)
@@ -99,13 +95,6 @@ class Room {
 				}
 		}
 	}
-
-	//Collider.generateManaZones(
-	//this.settings["bases positions"],
-	//this.settings["mana zone distance"],
-	//this.settings["mana zone width"],
-	//this
-	//);
 }
 
 export default Room

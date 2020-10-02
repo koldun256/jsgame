@@ -25,16 +25,13 @@ class GameObject {
 
 	data(situation) {
 		switch (situation) {
-			case 'know':
-				return {
-					id: this.id,
-					type: this.type,
-				}
 			case 'see':
 				return {
+					...this.collider.payload,
 					id: this.id,
-					position: this.position,
 					movement: this.movement ? this.movement.data() : null,
+					display: this.collider.shape,
+					color: this.room.settings.colors[this.type]
 				}
 		}
 	}

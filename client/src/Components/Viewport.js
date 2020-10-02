@@ -1,17 +1,13 @@
 import React, {
-	useState,
-	useEffect,
-	useRef,
 	useMemo,
 	createContext,
 } from 'react'
 import { createUseStyles } from 'react-jss'
 import eventSystem from 'Other/eventSystem'
-import Translator from 'Other/translator.js'
-import GameObject from 'Components/GameObject'
-import Target from 'Components/Target'
-import useSubscriber from 'Hooks/useSubscriber'
-
+import Translator from 'Other/translator'
+import GameObject from 'Components/GameObject';
+import backgroundUrl from 'Assets/img/bg.png';
+import useGameObjects from 'Hooks/useGameObjects';
 const useStyles = createUseStyles({
 	viewport: {
 		margin: 'auto',
@@ -28,48 +24,29 @@ const useStyles = createUseStyles({
 export const TranslatorContext = createContext()
 
 const defaultSeeing = [
-	<GameObject
-		object={{
-			type: 'bg',
-			position: [3000, 3000],
-			id: 'bg',
-			movement: { step: [0, 0], startPosition: [3000, 3000] },
-		}}
-		key="bg"
-	/>,
-	<Target key="target" />,
+	{
+		position: [3000,3000],
+		display: 'img',
+		img: backgroundUrl,
+		size: [6000,6000],
+		id: 'bg'
+	},
+	{
+		position: [0,0],
+		id: 'target',
+		display: 'rect',
+		size: [30, 30],
+		color: '#edc917'
+	}
 ]
 
 function Viewport(props) {
-	const classes = useStyles(props),
-		knownObjects = useRef(new Set(props.startKnowing)),
-		translator = useMemo(() => {
-			return Translator(document.documentElement.clientHeight, props.size)
-		}, []),
-		seeingObjects = useRef(new Set(defaultSeeing)),
-		[, rerender] = useState()
-
-	function see({ id, position, movement }) {
-		console.log('seeing')
-		let knownObject = [...knownObjects.current].find(obj => obj.id == id)
-		if (!knownObject) return console.error('seeing unknown object')
-		let objectData = {
-			__proto__: knownObject,
-			position,
-			movement: movement || { step: [0, 0] },
-		}
-		seeingObjects.current.add(
-			<GameObject object={objectData} key={objectData.id} />
-		)
-		rerender({})
-	}
-	useEffect(() => {
-		props.startSeeing.forEach(see)
-	}, [])
-
-	useSubscriber('socket@know', object => knownObjects.add(object))
-	useSubscriber('socket@see', see)
-
+	const translator = useMemo(() => 
+		Translator(document.documentElement.clientHeight, props.size)
+	, [])
+	const children = useGameObjects(props, defaultSeeing)
+	console.log(children);
+	const classes = useStyles(props)
 	const setTarget = e => {
 		let rect = e.target.getBoundingClientRect()
 		let viewportPosition = [e.clientX - rect.left, e.clientY - rect.top]
@@ -80,11 +57,12 @@ function Viewport(props) {
 			position: globalPosition,
 		})
 	}
-	let children = [...seeingObjects.current]
 	return (
 		<TranslatorContext.Provider value={translator}>
 			<div className={classes.viewport} onClick={setTarget}>
-				{children}
+				{children.map(child => (
+					<GameObject {...child} key={child.id} />
+				))}
 			</div>
 		</TranslatorContext.Provider>
 	)

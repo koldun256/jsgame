@@ -24,5 +24,10 @@
 		}
 	},
 	"FPS": 10,
-	"sync delay": 1000
+	"sync delay": 1000,
+	"colors": {
+		"player": "#FF9090",
+		"base": "#A0A0A0",
+		"manaZone": "#9090FF"
+	}
 }

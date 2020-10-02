@@ -46,7 +46,9 @@ class Player extends GameObject {
 		socket.on('cast', spellIndex => this.cast(spellIndex))
 
 		this.viewport.onEnter('all', collider => {
-			if (collider.type != 'viewport') this.see(collider.owner)
+			if (collider.type == 'viewport') return
+			if (collider.owner == this) return
+			this.see(collider.owner)
 		})
 		this.viewport.onExit('all', collider => {
 			if (collider.type != 'viewport') this.unsee(collider.owner)
@@ -90,11 +92,6 @@ class Player extends GameObject {
 		switch (situation) {
 			case 'see':
 				return super.data('see')
-			case 'know':
-				return super.data('know').add({
-					team: this.team.id,
-					name: this.name,
-				})
 			case 'connect to waiting':
 				return {
 					id: this.id,
