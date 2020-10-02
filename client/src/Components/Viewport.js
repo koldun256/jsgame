@@ -29,14 +29,16 @@ const defaultSeeing = [
 		display: 'img',
 		img: backgroundUrl,
 		size: [6000,6000],
-		id: 'bg'
+		id: 'bg',
+		zIndex: -2
 	},
 	{
 		position: [0,0],
 		id: 'target',
 		display: 'rect',
 		size: [30, 30],
-		color: '#edc917'
+		color: '#edc917',
+		zIndex: -1
 	}
 ]
 

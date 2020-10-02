@@ -11,9 +11,10 @@ const useStyles = createUseStyles({
 		top: object => object.position[1],
 		width: object => object.size[0],
 		height: object => object.size[1],
+		zIndex: object => object.zIndex || 'auto'
 	},
 	img: {
-		backgroundImage: object => object.img
+		backgroundImage: object => `url(${object.img})`
 	},
 	rect: {
 		backgroundColor: object => object.color
