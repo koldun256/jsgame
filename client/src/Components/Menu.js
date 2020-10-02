@@ -1,7 +1,7 @@
-import React, { useState, useContext } from "react";
-import Button from "Components/Button";
-import eventSystem from 'Other/eventSystem';
-import {createUseStyles} from 'react-jss';
+import React, { useState } from 'react'
+import Button from 'Components/Button'
+import eventSystem from 'Other/eventSystem'
+import { createUseStyles } from 'react-jss'
 
 const useStyles = createUseStyles({
 	card: {
@@ -11,36 +11,36 @@ const useStyles = createUseStyles({
 		transform: 'translate(-50%, -50%)',
 		top: '50vh',
 		left: '50vw',
-		backgroundColor: '#D0D0D0'
-	}
+		backgroundColor: '#D0D0D0',
+	},
 })
 
 const defaultSpells = [
 	{
-		action: "stun",
+		action: 'stun',
 		props: [10],
-		selectors: [{ name: "others", props: [], selectors: [] }]
+		selectors: [{ name: 'others', props: [], selectors: [] }],
 	},
 	{
-		action: "stun",
+		action: 'stun',
 		props: [10],
-		selectors: [{ name: "others", props: [], selectors: [] }]
+		selectors: [{ name: 'others', props: [], selectors: [] }],
 	},
 	{
-		action: "stun",
+		action: 'stun',
 		props: [10],
-		selectors: [{ name: "others", props: [], selectors: [] }]
-	}
-];
+		selectors: [{ name: 'others', props: [], selectors: [] }],
+	},
+]
 
 export default function Menu() {
-	let [name, setName] = useState("");
+	let [name, setName] = useState('')
 	let classes = useStyles()
 
 	let requestEnter = () => {
-		eventSystem.publish("socket-emit@request room enter", {
+		eventSystem.publish('socket-emit@request room enter', {
 			spells: defaultSpells,
-			name: name
+			name: name,
 		})
 	}
 
@@ -50,10 +50,7 @@ export default function Menu() {
 				value={name}
 				onChange={event => setName(event.target.value)}
 			/>
-			<Button
-				click={requestEnter}
-				text="Присоеденится"
-			/>
+			<Button click={requestEnter} text="Присоеденится" />
 		</div>
-	);
+	)
 }

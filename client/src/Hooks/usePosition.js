@@ -19,7 +19,6 @@ function reducer(state, action) {
 		}
 	}
 	if (action.type == 'teleport') {
-		console.log('teleportong...');
 		return {
 			position: action.position,
 			step: [0, 0],
@@ -35,7 +34,6 @@ function usePosition(object) {
 	})
 	const translator = useContext(TranslatorContext)
 	useSubscriber('teleport', ({ id, position }) => {
-		console.log('teleport ', position);
 		if (id == object.id) dispatch({ type: 'teleport', position })
 	})
 	useSubscriber(

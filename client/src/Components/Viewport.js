@@ -1,13 +1,11 @@
-import React, {
-	useMemo,
-	createContext,
-} from 'react'
+import React, { useMemo, createContext } from 'react'
+import PropTypes from 'prop-types'
 import { createUseStyles } from 'react-jss'
 import eventSystem from 'Other/eventSystem'
 import Translator from 'Other/translator'
-import GameObject from 'Components/GameObject';
-import backgroundUrl from 'Assets/img/bg.png';
-import useGameObjects from 'Hooks/useGameObjects';
+import GameObject from 'Components/GameObject'
+import backgroundUrl from 'Assets/img/bg.png'
+import useGameObjects from 'Hooks/useGameObjects'
 const useStyles = createUseStyles({
 	viewport: {
 		margin: 'auto',
@@ -25,29 +23,30 @@ export const TranslatorContext = createContext()
 
 const defaultSeeing = [
 	{
-		position: [3000,3000],
+		position: [3000, 3000],
 		display: 'img',
 		img: backgroundUrl,
-		size: [6000,6000],
+		size: [6000, 6000],
 		id: 'bg',
-		zIndex: -2
+		zIndex: -2,
 	},
 	{
-		position: [0,0],
+		position: [0, 0],
 		id: 'target',
 		display: 'rect',
 		size: [30, 30],
 		color: '#edc917',
-		zIndex: -1
-	}
+		zIndex: -1,
+	},
 ]
 
 function Viewport(props) {
-	const translator = useMemo(() => 
-		Translator(document.documentElement.clientHeight, props.size)
-	, [])
+	console.log(props)
+	const translator = useMemo(
+		() => Translator(document.documentElement.clientHeight, props.size),
+		[]
+	)
 	const children = useGameObjects(props, defaultSeeing)
-	console.log(children);
 	const classes = useStyles(props)
 	const setTarget = e => {
 		let rect = e.target.getBoundingClientRect()
@@ -68,6 +67,25 @@ function Viewport(props) {
 			</div>
 		</TranslatorContext.Provider>
 	)
+}
+
+Viewport.propTypes = {
+	size: PropTypes.number.isRequired,
+	seeing: PropTypes.arrayOf(
+		PropTypes.exact({
+			display: PropTypes.oneOf(['rect', 'ring', 'img']).isRequired,
+			id: PropTypes.string.isRequired,
+			position: PropTypes.arrayOf(PropTypes.number).isRequired,
+			size: PropTypes.arrayOf(PropTypes.number).isRequired,
+			movement: PropTypes.exact({
+				step: PropTypes.arrayOf(PropTypes.number).isRequired,
+				startPosition: PropTypes.arrayOf(PropTypes.number).isRequired,
+			}),
+			color: PropTypes.string,
+			img: PropTypes.string,
+			protagonist: PropTypes.bool,
+		})
+	).isRequired,
 }
 
 export default Viewport
