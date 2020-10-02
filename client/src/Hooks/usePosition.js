@@ -1,5 +1,6 @@
 import { useContext, useReducer } from 'react'
 import useSubscriber from 'Hooks/useSubscriber'
+import useCallback from 'Hooks/useCallback';
 import { TranslatorContext } from 'Components/Viewport'
 
 function reducer(state, action) {
@@ -27,7 +28,7 @@ function reducer(state, action) {
 }
 
 function usePosition(object) {
-	const movement = object.movement || {step: [0,0]}
+	const movement = object.movement || { step: [0, 0] }
 	const [state, dispatch] = useReducer(reducer, {
 		position: object.position,
 		step: movement.step,
@@ -36,14 +37,14 @@ function usePosition(object) {
 	useSubscriber('teleport', ({ id, position }) => {
 		if (id == object.id) dispatch({ type: 'teleport', position })
 	})
-	useSubscriber(
-		'frame',
-		() => {
-			dispatch({ type: 'step' })
-			if (object.protagonist) translator.setCenter(state.position)
-		},
-		//[state.position]
-	)
+	const onFrame = useCallback(() => {
+		dispatch({ type: 'step' })
+		if (object.protagonist) {
+			console.log('adf');
+			translator.setCenter(state.position)
+		}
+	})
+	useSubscriber( 'frame', onFrame)
 	useSubscriber('socket@change movement', msg => {
 		if (msg.id == object.id) {
 			console.log('changing movement')
