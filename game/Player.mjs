@@ -19,7 +19,7 @@ class Player extends GameObject {
 
 		this.name = name
 		this.socket = socket
-		this.seeing = new Set()
+		this.seeing = new Set(room.manaZones)
 		this.spells = spellsData.map(spellData => new Spell(this, spellData))
 		this.mana = startMana
 		this.viewport = new Collider(
@@ -47,7 +47,6 @@ class Player extends GameObject {
 
 		this.viewport.onEnter('all', collider => {
 			if (collider.type == 'viewport') return
-			if (collider.owner == this) return
 			this.see(collider.owner)
 		})
 		this.viewport.onExit('all', collider => {
@@ -76,7 +75,7 @@ class Player extends GameObject {
 		console.log(
 			`seeing object ${object.id} with type ${object.type} from ${this.id}`
 		)
-		if (this.seeing.has(object)) throw 'see already visible object'
+		if (this.seeing.has(object)) return
 		this.send('see', object.data('see'))
 		this.seeing.add(object)
 	}
@@ -91,7 +90,7 @@ class Player extends GameObject {
 	data(situation) {
 		switch (situation) {
 			case 'see':
-				return super.data('see')
+				return super.data(...arguments)
 			case 'connect to waiting':
 				return {
 					id: this.id,

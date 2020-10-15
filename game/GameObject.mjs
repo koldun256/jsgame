@@ -23,7 +23,7 @@ class GameObject {
 		}
 	}
 
-	data(situation) {
+	data(situation, detail={protagonist:false}) {
 		switch (situation) {
 			case 'see':
 				return {
@@ -31,7 +31,8 @@ class GameObject {
 					id: this.id,
 					movement: this.movement ? this.movement.data() : null,
 					display: this.collider.shape,
-					color: this.room.settings.colors[this.type]
+					protagonist: detail.protagonist,
+					color: !detail.protagonist ? this.room.settings.colors[this.type] : this.room.settings.colors.protagonist
 				}
 		}
 	}
@@ -63,4 +64,5 @@ class GameObject {
 		this.setMovement(new Movement(this, target, this.speed))
 	}
 }
+
 export default GameObject

@@ -20,8 +20,10 @@ const useStyles = createUseStyles({
 		backgroundColor: object => object.color
 	},
 	ring: {
+		width: ({radius, translator}) => translator.k * radius * 2,
+		height: ({radius, translator}) => translator.k * radius * 2,
 		borderRadius: '50%',
-		border: object => `${object.width}px solid ${object.color}`
+		border: ({translator, width, color}) => `${translator.k * width}px solid ${color}`
 	}
 })
 
@@ -29,7 +31,7 @@ function useDisplay(object) {
 	const translator = useContext(TranslatorContext)
 	const size = translator.getSize(object.size)
 	const position = translator.globalToLocal(object.position)
-	const classes = useStyles({...object, size, position})
+	const classes = useStyles({...object, size, position, translator})
 	return `${classes[object.display]} ${classes.object}`
 }
 
