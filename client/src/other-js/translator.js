@@ -24,6 +24,5 @@ export default function Translator(viewportSize, serverViewportSize) {
 				originalSize[1] * sizeKoefficient
 			];
 		},
-		k: sizeKoefficient
 	}
 }

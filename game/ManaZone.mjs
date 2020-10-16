@@ -13,7 +13,6 @@ class ManaZone extends GameObject {
 				],
 			},
 		})
-		room.manaZones.push(this)
 	}
 }
 export default ManaZone

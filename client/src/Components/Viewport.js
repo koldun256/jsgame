@@ -22,25 +22,26 @@ const useStyles = createUseStyles({
 export const TranslatorContext = createContext()
 
 const defaultSeeing = [
-{
-	position: [3000, 3000],
-	display: 'img',
-	img: backgroundUrl,
-	size: [6000, 6000],
-	id: 'bg',
-	zIndex: -2,
-},
+	{
+		position: [3000, 3000],
+		display: 'img',
+		img: backgroundUrl,
+		size: [6000, 6000],
+		id: 'bg',
+		zIndex: -2,
+	},
 	{
 		position: [0, 0],
 		id: 'target',
 		display: 'rect',
 		size: [30, 30],
-		color: '#ffff80',
+		color: '#edc917',
 		zIndex: -1,
 	},
 ]
 
 function Viewport(props) {
+	console.log(props)
 	const translator = useMemo(
 		() => Translator(document.documentElement.clientHeight, props.size),
 		[]

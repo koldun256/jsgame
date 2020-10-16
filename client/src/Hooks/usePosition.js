@@ -39,8 +39,10 @@ function usePosition(object) {
 	})
 	const onFrame = useCallback(() => {
 		dispatch({ type: 'step' })
-		if (object.protagonist) translator.setCenter(state.position)
-		
+		if (object.protagonist) {
+			console.log('adf');
+			translator.setCenter(state.position)
+		}
 	})
 	useSubscriber( 'frame', onFrame)
 	useSubscriber('socket@change movement', msg => {

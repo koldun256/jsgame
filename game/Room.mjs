@@ -7,7 +7,6 @@ import CollisionSystem from './CollisionSystem'
 class Room {
 	constructor(mode) {
 		this.gameObjects = []
-		this.manaZones = []
 		this.teams = []
 		this.players = []
 		this.settings = setting.add(setting.modes[mode])
@@ -35,11 +34,9 @@ class Room {
 		this.collisionSystem.update()
 		this.players.forEach(protagonist => {
 			protagonist.send('room start', {
-				seeing: [...protagonist.seeing].map(object => {
-					let detail = {protagonist: object == protagonist}
-					console.log('a', detail);
-					return object.data('see', detail)
-				})
+				seeing: [...protagonist.seeing].map(object =>
+					object.data('see')
+				).concat([protagonist.data('see').add({protagonist: true})]),
 			})
 		})
 		Main.eventSystem.emit('room start', this.id)

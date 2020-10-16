@@ -27,8 +27,7 @@
 	"sync delay": 1000,
 	"colors": {
 		"player": "#FF9090",
-		"base": "#909090",
-		"manaZone": "#9090FF",
-		"protagonist": "#90FF90"
+		"base": "#A0A0A0",
+		"manaZone": "#9090FF"
 	}
 }
