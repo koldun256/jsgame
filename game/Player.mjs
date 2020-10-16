@@ -112,6 +112,6 @@ class Player extends GameObject {
 	send(event, message) {
 		this.socket.emit(event, message)
 	}
-}
+	}
 
 export default Player
