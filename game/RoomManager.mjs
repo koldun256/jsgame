@@ -1,4 +1,4 @@
-import Room from './Room'
+import Room from './Room.mjs'
 
 class RoomManager {
 	constructor(defaultMode){

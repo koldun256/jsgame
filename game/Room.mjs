@@ -1,16 +1,16 @@
-import Team from './Team'
-import setting from './setting.json'
-import * as util from './util'
+import Team from './Team.mjs'
+import setting from './config.mjs'
+import * as util from './util.mjs'
 import * as Main from './Main.mjs'
-import EventSystem from './EventSystem'
-import CollisionSystem from './CollisionSystem'
+import EventSystem from './EventSystem.mjs'
+import CollisionSystem from './CollisionSystem.mjs'
 class Room {
 	constructor(mode) {
 		this.gameObjects = []
 		this.teams = []
 		this.players = []
 		this.settings = setting.add(setting.modes[mode])
-		this.eventSystem = new EventSystem()
+		this.eventSystem = new EventSystem(Main.eventSystem)
 		this.collisionSystem = new CollisionSystem()
 		this.id = util.generateID()
 
@@ -35,8 +35,8 @@ class Room {
 		this.players.forEach(protagonist => {
 			protagonist.send('room start', {
 				seeing: [...protagonist.seeing].map(object =>
-					object.data('see')
-				).concat([protagonist.data('see').add({protagonist: true})]),
+					object.seeData()
+				).concat([protagonist.seeData(true)]),
 			})
 		})
 		Main.eventSystem.emit('room start', this.id)
@@ -52,7 +52,6 @@ class Room {
 				if (!gm.lifetime)
 					this.gameObjects.splice(this.gameObjects.indexOf(gm), 1)
 			})
-		this.gameObjects.filter(gm => 'movement' in gm).forEach(gm => gm.move())
 		this.collisionSystem.update()
 	}
 
@@ -72,7 +71,7 @@ class Room {
 	addPlayer(user, name, spellsData, teamID) {
 		let team = this.getTeam(teamID)
 		let player = user.createPlayer(name, this, team, spellsData)
-		this.send('adding to waiting', () => player.data('connect to waiting'))
+		this.send('adding to waiting', () => player.connectingData())
 		this.players.push(player)
 		player.send('response room enter', this.data('connect'))
 
@@ -89,11 +88,15 @@ class Room {
 			case 'connect':
 				return {
 					waiting: this.players.map(player =>
-						player.data('connect to waiting')
+						player.connectingData()
 					),
 					id: this.id,
 				}
 		}
+	}
+
+	registrate(object){
+		this.gameObjects.push(object)
 	}
 }
 

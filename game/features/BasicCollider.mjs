@@ -4,6 +4,7 @@ export default {
 	name: 'basic collider',
 	requires: [],
 	init(payload, shape) {
+		console.log(shape);
 		this.collider = new Collider(
 			this,
 			payload,

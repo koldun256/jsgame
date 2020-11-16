@@ -1,4 +1,4 @@
-import setting from '../setting.json'
+import setting from '../config.mjs'
 export default {
     name: 'Стан',
 

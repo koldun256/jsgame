@@ -10,10 +10,13 @@ import useSubscriber from '../Hooks/useSubscriber'
 function App() {
 	let [location, setLocation] = useState('menu')
 	let [gameSetting, setGameSetting] = useState()
+
 	useSubscriber('socket@response room enter', data => {
 		setGameSetting(data)
+		console.log('entering room with message ', data)
 		setLocation('game')
 	})
+
 	if (location == 'menu') {
 		return <Menu />
 	} else {

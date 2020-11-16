@@ -1,6 +1,6 @@
 export default {
 	name: 'mana',
-	requires: ['base collider', 'socket events'],
+	requires: ['basic collider', 'socket events'],
 	init(start, max){
 		let mana = start
 		let adding = 0

@@ -2,7 +2,7 @@ const listeners = new Set()
 export default {
 	subscribe(toWhat, exec) {
 		let check
-		if(typeof toWhat == 'string') check = event => event == toWhat
+	if(typeof toWhat == 'string') check = event => event == toWhat
 		if(toWhat instanceof RegExp) check = event => toWhat.test(event)
 		if(typeof toWhat == 'function') check = toWhat
 		let listener = {check, exec}

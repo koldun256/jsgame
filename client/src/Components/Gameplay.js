@@ -14,7 +14,6 @@ const useStyles = createUseStyles({
 
 export default function Gameplay(props) {
 	const classes = useStyles()
-	console.log(props)
 	return (
 		<div className={classes.container}>
 			<div>

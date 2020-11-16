@@ -1,5 +1,5 @@
-import Player from './Player'
-import * as Main from './Main'
+import Player from './Player.mjs'
+import * as Main from './Main.mjs'
 
 function User(socket){
 	this.createPlayer = function(name, room, team, spellsData){

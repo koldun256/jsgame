@@ -1,6 +1,5 @@
 {
   "name": "jsgame",
-  "type": "module",
   "engines": {
     "node": "12.x"
   },

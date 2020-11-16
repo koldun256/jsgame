@@ -4,6 +4,7 @@ class CollisionSystem {
 		this.listeners = []
 	}
 	addCollider(collider) {
+		console.log(collider);
 		if (!(collider.type in this.colliders)) {
 			this.colliders[collider.type] = []
 		}

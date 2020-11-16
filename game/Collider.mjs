@@ -1,4 +1,4 @@
-import CollisionListener from './CollisionListener'
+import CollisionListener from './CollisionListener.mjs'
 
 
 const collisionAlgorithms = {
@@ -42,6 +42,9 @@ const collisionAlgorithms = {
 			distance < ring.payload.radius
 		return result
 	},
+	'ring ring': () => {
+		return true
+	}
 }
 
 class Collider {

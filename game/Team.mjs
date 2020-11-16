@@ -1,15 +1,18 @@
 import GameObject from './GameObject.mjs'
-import ManaZone from './ManaZone'
+import ManaZone from './ManaZone.mjs'
+import Base from './Base.mjs';
 
-class Team extends GameObject {
+class Team {
 	constructor(room, position){
 		let size = room.settings['base size']
-		super(room, 'base', position, {shape: 'rect', payload: {size}})
 		this.playersCount = room.settings['players in team']
 		this.pointsToWin = room.settings['points to win']
 
 		this.players = []
 		this.points = 0
+		this.position = position
+
+		this.base = new Base(room, position)
 		this.manaZone = new ManaZone(room, position)
 	}
 

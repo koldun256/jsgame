@@ -14,6 +14,7 @@ class Movement {
 		this.owner.position[0] += delta[0]
 		this.owner.position[1] += delta[1]
 		if (this.hasEnd && !this.vector.inEdges(this.owner.position)) {
+			console.log('stoopp')
 			this.owner.stop()
 		}
 	}
