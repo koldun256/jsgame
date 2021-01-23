@@ -1,34 +1,110 @@
-import templates from './SpellTemplates.mjs'
-function parse(player, data){
-	function recursiveParseSelector(selectorData) {
-		let selectorTemplate = templates.selectors[selectorData.name]
-
-		if (!selectorTemplate.valid(selectorData.props))
-			throw 'bad selector values'
-
-		let children = selectorData.selectors.map(recursiveParseSelector)
-		let selectorObject = selectorTemplate.create(
-			player,
-			selectorData.props,
-			children
-		)
-		return selectorObject
+class ParameterContext {
+	constructor(template, values) {
+		this.template = template
+		this.values = values
+		this.parameterFields = template.parameterFields
+		this.selectorFields = template.selectorFields
+		this.parameterValues = values.parameterValues
+		this.selectorValues = values.selectorValues
 	}
-
-	let actionTemplate = templates.actions[data.action]
-	if (!actionTemplate.valid(data.props)) throw 'bad action values'
-	let selectors = data.selectors.map((selectorData) =>
-		recursiveParseSelector(selectorData)
-	)
-	return actionTemplate.create(player, data.props, selectors)
+	value(field) {
+		try {
+			return this.parameterValue(field)
+		} catch (e) {
+			try {
+				return this.selectorValue(field)
+			} catch (e) {
+				return null
+			}
+		}
+	}
+	parameterValue(field) {
+		return this.parameterValues[this.parameterFields.indexOf(field)]
+	}
+	selectorValue(field) {
+		return this.selectorValues[this.selectorFields.indexOf(field)]
+	}
 }
-class Spell {
-	constructor(player, data){
-		this.action = parse(player, data)
+export class CastContext extends ParameterContext {
+	constructor(template, values, player) {
+		super(template, values)
 		this.player = player
-		this.mana = this.action.mana
-		this.cast = this.action.cast
+		this.room = player.room
 	}
 }
+export class ActionTemplate {
+	constructor({ id, name, defenition, parameters, selectors, cast, cost }) {
+		this.id = id
+		this.name = name
+		this.defenition = defenition
+		this.parameterFields = parameters
+		this.selectorFields = selectors
+		this.cast = cast
+		this.calcCost = cost
+	}
 
-export default Spell
+	fill(user, values) {
+		return new FilledAction(this, user, values)
+	}
+}
+export class Action {
+	constructor(template, user, values) {
+		this.template = template
+		this.user = user
+		this.context = new ParameterContext(template, values)
+		this.cost = template.cost(this.context)
+	}
+	cast(player) {
+		const castContext = new CastContext(
+			this.template,
+			this.context.values,
+			player
+		)
+		this.template.cast(castContext)
+	}
+}
+class Parameter {
+	constructor(data){
+		this.type = data.type
+		this.defenition = data.defenition
+		this.default = data.default
+		this.validate = data.validate
+		this.id = data.id
+	}
+}
+class SelectorField {
+	constructor(data){
+		this.type = data.type
+		this.defenition = data.defenition
+		this.id = data.id
+	}
+}
+class SelectorTemplate {
+	constructor({
+		type,
+		id,
+		name,
+		defenition,
+		parameters,
+		selectors,
+		cast,
+		cost,
+	}) {
+		this.id = id
+		this.name = name
+		this.defenition = defenition
+		this.parameterFields = parameters
+		this.selectorFields = selectors
+		this.cast = cast
+		this.calcCost = cost
+	}
+
+	fill(user, parameterValues, selectorValues) {
+		return new Selector(this, user, parameterValues, selectorValues)
+	}
+}
+class Selector {}
+class Spell {}
+class SpellSet {
+	constructor(spellData) {}
+}
